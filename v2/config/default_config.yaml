@@ -1,0 +1,85 @@
+# CliffDelineaTool v2.0 Configuration
+
+# Model architecture
+model:
+  name: "CNN_BiLSTM"
+  cnn:
+    channels: [64, 128, 64]
+    kernel_sizes: [5, 5, 3]
+    dropout: 0.2
+  lstm:
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.3
+    bidirectional: true
+  attention:
+    num_heads: 8
+    dim: 256
+    dropout: 0.1
+
+# Feature engineering
+features:
+  n_vert: 20  # Local slope window size (must match v1.0)
+  seg_tolerance: 2.0  # Soft label sigma (meters)
+  input_dim: 12  # Number of features per point
+
+# Training
+training:
+  batch_size: 16
+  num_epochs: 100
+  learning_rate: 0.001
+  optimizer: "Adam"
+  weight_decay: 0.0001
+  grad_clip: 1.0
+
+  # Learning rate schedule
+  scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    patience: 5
+    factor: 0.5
+    min_lr: 0.00001
+    verbose: true
+
+  # Early stopping
+  early_stopping:
+    patience: 15
+    monitor: "val_loss"
+    mode: "min"
+
+# Loss weights
+loss:
+  lambda_seg: 1.0
+  lambda_reg: 0.5
+  lambda_conf: 0.3
+  lambda_smooth: 0.1
+
+  # Segmentation loss (focal loss)
+  class_weights: [1.0, 50.0, 50.0]  # [background, base, top]
+  focal_gamma: 2.0
+  focal_alpha: [0.25, 1.0, 1.0]
+
+# Post-processing
+postprocess:
+  confidence_threshold: 0.5
+  smooth_window: 10
+  outlier_std_threshold: 2.0
+  min_base_top_distance: 5.0  # Minimum distance between base and top (meters)
+
+# Data splits (AOI assignments)
+data:
+  train_aois: [1, 2, 3]
+  val_aois: [4]
+  test_aois: [5, 6, 7, 8]
+  data_root: "../datasets"
+
+# Paths
+paths:
+  experiments: "experiments/runs"
+  checkpoints: "experiments/runs/checkpoints"
+  logs: "experiments/runs/logs"
+  outputs: "outputs"
+
+# Device
+device: "cuda"  # or "cpu"
+seed: 42
