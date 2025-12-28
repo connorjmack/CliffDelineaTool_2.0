@@ -40,8 +40,8 @@ class CliffTransectDataset(Dataset):
         self.transform = transform
         self.use_soft_labels = use_soft_labels
 
-        # Load preprocessed data
-        self.transects = torch.load(self.data_path)
+        # Load preprocessed data (weights_only=False is safe for our own preprocessed data)
+        self.transects = torch.load(self.data_path, weights_only=False)
 
         print(f"Loaded {len(self.transects)} transects from {self.data_path}")
 
@@ -128,15 +128,21 @@ def load_aoi_data(
         raise FileNotFoundError(f"Points file not found: {points_file}")
 
     points = pd.read_csv(points_file)
-    # Rename columns to standardize (handles both FID and PointID naming)
-    if 'FID' in points.columns and 'PointID' not in points.columns:
-        points.rename(columns={'FID': 'PointID'}, inplace=True)
-    if 'ID_1' in points.columns and 'TransectID' not in points.columns:
-        points.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-    if 'RASTERVALU' in points.columns and 'Elevation' not in points.columns:
-        points.rename(columns={'RASTERVALU': 'Elevation'}, inplace=True)
-    if 'NEAR_DIST' in points.columns and 'Distance' not in points.columns:
-        points.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
+    # Rename columns to standardize (case-insensitive matching)
+    col_map = {}
+    for col in points.columns:
+        col_upper = col.upper()
+        if col_upper == 'FID' and 'PointID' not in points.columns:
+            col_map[col] = 'PointID'
+        elif col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in points.columns:
+            col_map[col] = 'TransectID'
+        elif col_upper == 'RASTERVALU' and 'Elevation' not in points.columns:
+            col_map[col] = 'Elevation'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in points.columns:
+            col_map[col] = 'Distance'
+
+    if col_map:
+        points.rename(columns=col_map, inplace=True)
 
     # Load ground truth
     base_true_file = aoi_path / f"{aoi_name}_base_true.shp"
@@ -148,13 +154,27 @@ def load_aoi_data(
     base_true = gpd.read_file(base_true_file)
     top_true = gpd.read_file(top_true_file)
 
-    # Standardize column names
-    if 'ID_1' in base_true.columns and 'TransectID' not in base_true.columns:
-        base_true.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-        top_true.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-    if 'NEAR_DIST' in base_true.columns and 'Distance' not in base_true.columns:
-        base_true.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
-        top_true.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
+    # Standardize column names (case-insensitive matching)
+    col_map_base = {}
+    for col in base_true.columns:
+        col_upper = col.upper()
+        if col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in base_true.columns:
+            col_map_base[col] = 'TransectID'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in base_true.columns:
+            col_map_base[col] = 'Distance'
+
+    col_map_top = {}
+    for col in top_true.columns:
+        col_upper = col.upper()
+        if col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in top_true.columns:
+            col_map_top[col] = 'TransectID'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in top_true.columns:
+            col_map_top[col] = 'Distance'
+
+    if col_map_base:
+        base_true.rename(columns=col_map_base, inplace=True)
+    if col_map_top:
+        top_true.rename(columns=col_map_top, inplace=True)
 
     # Process each transect
     transects = []
@@ -239,41 +259,41 @@ def create_dataset_from_aois(
 
 
 # Augmentation functions
-def add_gaussian_noise(features: torch.Tensor, noise_std: float = 0.1) -> torch.Tensor:
+def add_gaussian_noise(features: torch.Tensor, noise_std: float = 0.02) -> torch.Tensor:
     """
-    Add Gaussian noise to elevation features.
+    Add Gaussian noise to normalized elevation features.
 
     Args:
-        features: [seq_len, 12] feature tensor
-        noise_std: Standard deviation of noise (meters)
+        features: [seq_len, 10] feature tensor (all normalized)
+        noise_std: Standard deviation of noise (fraction of normalized range)
 
     Returns:
         Augmented features
     """
     features = features.clone()
-    # Add noise to elevation (feature 0) and normalized elevation (feature 1)
+    # Add noise to normalized elevation (feature 0)
     features[:, 0] += torch.randn_like(features[:, 0]) * noise_std
-    # Recompute normalized elevation
-    elev = features[:, 0]
-    features[:, 1] = (elev - elev.min()) / (elev.max() - elev.min() + 1e-8)
+    # Clip to valid range [0, 1]
+    features[:, 0] = torch.clamp(features[:, 0], 0.0, 1.0)
     return features
 
 
-def vertical_shift(features: torch.Tensor, shift_range: float = 1.0) -> torch.Tensor:
+def vertical_shift(features: torch.Tensor, shift_range: float = 0.05) -> torch.Tensor:
     """
-    Apply random vertical shift (simulate datum changes).
+    Apply random vertical shift to normalized elevation (simulate datum changes).
 
     Args:
-        features: [seq_len, 12] feature tensor
-        shift_range: Maximum shift in meters
+        features: [seq_len, 10] feature tensor (all normalized)
+        shift_range: Maximum shift as fraction of normalized range
 
     Returns:
         Augmented features
     """
     features = features.clone()
     shift = torch.rand(1).item() * 2 * shift_range - shift_range
-    features[:, 0] += shift  # Shift raw elevation
-    # Normalized elevation stays the same (relative)
+    features[:, 0] += shift  # Shift normalized elevation
+    # Clip to valid range [0, 1]
+    features[:, 0] = torch.clamp(features[:, 0], 0.0, 1.0)
     return features
 
 
@@ -303,7 +323,7 @@ class AugmentTransect:
         Apply augmentations with given probabilities.
 
         Args:
-            features: [seq_len, 12]
+            features: [seq_len, 10] (all normalized)
             labels: [seq_len, 3] or [seq_len]
 
         Returns:

@@ -27,7 +27,8 @@ from cliff_dl.models.cnn_lstm import CNN_BiLSTM_CliffDetector
 from cliff_dl.models.metrics import compute_cliff_detection_metrics, format_metrics
 from cliff_dl.inference.postprocess import (
     predictions_to_dataframe,
-    postprocess_predictions
+    postprocess_predictions,
+    apply_geomorphological_constraints
 )
 from cliff_dl.inference.export import export_to_csv
 import matplotlib.pyplot as plt
@@ -62,6 +63,7 @@ def evaluate_model(
     all_top_gt = []
     all_base_conf = []
     all_top_conf = []
+    transect_data = {}  # Store transect data for geomorphological constraints
 
     print("\nRunning inference...")
     with torch.no_grad():
@@ -87,6 +89,15 @@ def evaluate_model(
             all_base_gt.append(batch['base_dist_gt'].numpy())
             all_top_gt.append(batch['top_dist_gt'].numpy())
 
+            # Store transect data for geomorphological constraints
+            for i, tid in enumerate(batch['transect_ids']):
+                length = lengths[i]
+                transect_data[tid] = {
+                    'distances': distances[i, :length].cpu().numpy(),
+                    'features': features[i, :length].cpu().numpy(),
+                    'elevations': None  # Will use normalized elevation from features
+                }
+
     # Concatenate all batches
     base_pred = np.concatenate(all_base_pred)
     top_pred = np.concatenate(all_top_pred)
@@ -107,8 +118,21 @@ def evaluate_model(
     # Apply post-processing if requested
     if apply_postprocessing:
         print("\nApplying post-processing...")
-        predictions_df_clean = postprocess_predictions(
+
+        # PHASE 1: Apply geomorphological constraints first
+        print("  Step 1: Applying geomorphological constraints...")
+        predictions_df_clean = apply_geomorphological_constraints(
             predictions_df,
+            transect_data,
+            max_base_elevation=config['postprocess'].get('max_base_elevation', 15.0),
+            max_cliff_width=config['postprocess'].get('max_cliff_width', 150.0),
+            typical_cliff_width=config['postprocess'].get('typical_cliff_width', 100.0)
+        )
+
+        # Step 2: Apply standard post-processing (smoothing, outlier removal)
+        print("  Step 2: Applying smoothing and outlier removal...")
+        predictions_df_clean = postprocess_predictions(
+            predictions_df_clean,
             smooth_window=config['postprocess']['smooth_window'],
             outlier_threshold=config['postprocess']['outlier_std_threshold'],
             min_base_top_distance=config['postprocess']['min_base_top_distance']

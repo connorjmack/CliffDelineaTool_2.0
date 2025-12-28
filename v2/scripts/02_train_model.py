@@ -140,12 +140,12 @@ def main():
     use_augmentation = config.get('data', {}).get('use_augmentation', True)
     if use_augmentation:
         transform = AugmentTransect(
-            noise_std=0.1,
-            shift_range=1.0,
-            noise_prob=0.5,
-            shift_prob=0.5
+            noise_std=0.02,  # Increased from 0.1 (normalized features are in [0,1])
+            shift_range=0.05,  # Increased from 1.0 (normalized features are in [0,1])
+            noise_prob=0.8,  # Increased from 0.5 for more augmentation
+            shift_prob=0.8  # Increased from 0.5 for more augmentation
         )
-        print(f"  Data augmentation: enabled")
+        print(f"  Data augmentation: enabled (strong)")
     else:
         transform = None
         print(f"  Data augmentation: disabled")

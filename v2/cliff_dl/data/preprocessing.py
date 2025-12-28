@@ -65,7 +65,8 @@ def compute_features(
     n_vert: int = 20
 ) -> np.ndarray:
     """
-    Compute 12-dimensional feature vector for each point in transect.
+    Compute 10-dimensional feature vector for each point in transect.
+    All features are normalized to similar scales for better training stability.
 
     Args:
         transect_df: DataFrame with columns ['Elevation', 'Distance']
@@ -73,21 +74,19 @@ def compute_features(
         n_vert: Window size for local slope calculation
 
     Returns:
-        Feature array of shape [seq_len, 12]
+        Feature array of shape [seq_len, 10]
 
     Features:
-        0: elevation_raw - Raw elevation (m)
-        1: elevation_normalized - Min-max normalized [0,1]
-        2: distance_from_sea - NEAR_DIST (m)
-        3: distance_normalized - Normalized [0,1]
-        4: elevation_gradient - First derivative
-        5: elevation_curvature - Second derivative
-        6: seaward_slope - Average slope to n_vert seaward points (degrees)
-        7: landward_slope - Average slope to n_vert landward points (degrees)
-        8: trendline1_deviation - Elevation minus linear trendline
-        9: local_slope_change - Difference between landward and seaward slopes
-        10: convexity_index - Signed curvature
-        11: relative_elevation - Standardized elevation
+        0: elevation_normalized - Min-max normalized [0,1]
+        1: distance_normalized - Normalized [0,1]
+        2: elevation_gradient - First derivative (normalized by distance range)
+        3: elevation_curvature - Second derivative (normalized by distance range^2)
+        4: seaward_slope - Average slope to n_vert seaward points (normalized)
+        5: landward_slope - Average slope to n_vert landward points (normalized)
+        6: trendline1_deviation - Elevation minus linear trendline (normalized)
+        7: local_slope_change - Difference between landward and seaward slopes (normalized)
+        8: convexity_index - Signed curvature
+        9: relative_elevation - Standardized elevation
     """
     # Extract arrays
     elev = transect_df['Elevation'].values.astype(np.float32)
@@ -95,11 +94,8 @@ def compute_features(
 
     seq_len = len(elev)
 
-    # 1. Geometric features
-    # Feature 0: Raw elevation
-    elev_raw = elev
-
-    # Feature 1: Normalized elevation
+    # 1. Geometric features (all normalized to [0,1] or standardized)
+    # Feature 0: Normalized elevation
     elev_min, elev_max = elev.min(), elev.max()
     elev_range = elev_max - elev_min
     if elev_range > 1e-8:
@@ -107,38 +103,51 @@ def compute_features(
     else:
         elev_norm = np.zeros_like(elev)
 
-    # Feature 2: Raw distance
-    dist_raw = dist
-
-    # Feature 3: Normalized distance
+    # Feature 1: Normalized distance
     dist_max = dist.max()
     if dist_max > 1e-8:
         dist_norm = dist / dist_max
     else:
         dist_norm = np.zeros_like(dist)
 
-    # Feature 4: Elevation gradient (first derivative)
+    # Feature 2: Elevation gradient (first derivative, normalized)
     gradient = np.gradient(elev, dist)
+    gradient_std = gradient.std()
+    if gradient_std > 1e-8:
+        gradient_norm = gradient / gradient_std
+    else:
+        gradient_norm = np.zeros_like(gradient)
 
-    # Feature 5: Elevation curvature (second derivative)
+    # Feature 3: Elevation curvature (second derivative, normalized)
     curvature = np.gradient(gradient, dist)
+    curvature_std = curvature.std()
+    if curvature_std > 1e-8:
+        curvature_norm = curvature / curvature_std
+    else:
+        curvature_norm = np.zeros_like(curvature)
 
-    # 2. Domain features from v1.0
-    # Feature 6: Seaward slope
+    # 2. Domain features from v1.0 (normalized)
+    # Feature 4: Seaward slope (normalized to [0,1])
     seaward_slope = compute_local_slope(elev, dist, n_vert, 'seaward')
+    seaward_slope_norm = seaward_slope / 90.0  # Normalize degrees to [0,1]
 
-    # Feature 7: Landward slope
+    # Feature 5: Landward slope (normalized to [0,1])
     landward_slope = compute_local_slope(elev, dist, n_vert, 'landward')
+    landward_slope_norm = landward_slope / 90.0  # Normalize degrees to [0,1]
 
-    # Feature 8: Trendline 1 deviation
-    # Linear trendline from seaward to landward end
+    # Feature 6: Trendline deviation (normalized by elevation range)
     trendline1 = np.linspace(elev[0], elev[-1], seq_len)
     trendline_dev = elev - trendline1
+    if elev_range > 1e-8:
+        trendline_dev_norm = trendline_dev / elev_range
+    else:
+        trendline_dev_norm = np.zeros_like(trendline_dev)
 
-    # Feature 9: Local slope change
+    # Feature 7: Local slope change (normalized)
     slope_change = landward_slope - seaward_slope
+    slope_change_norm = slope_change / 90.0  # Normalize to [-1, 1]
 
-    # Feature 10: Convexity index (normalized curvature)
+    # Feature 8: Convexity index (normalized curvature)
     # Signed curvature: positive=convex, negative=concave
     denominator = (1 + gradient**2)**(3/2)
     convexity = np.where(
@@ -147,7 +156,7 @@ def compute_features(
         0.0
     )
 
-    # Feature 11: Relative elevation (standardized)
+    # Feature 9: Relative elevation (already standardized)
     elev_mean = elev.mean()
     elev_std = elev.std()
     if elev_std > 1e-8:
@@ -155,20 +164,55 @@ def compute_features(
     else:
         rel_elevation = np.zeros_like(elev)
 
-    # Stack all features
+    # PHASE 2: Geomorphological features
+    # Feature 10: Low elevation zone indicator (binary)
+    # Cliff bases typically occur at low elevations (0-15m)
+    low_elevation_zone = (elev < 15.0).astype(np.float32)
+
+    # Feature 11: Shore proximity (exponential decay from sea)
+    # Increases weight near shore where cliff base is expected
+    dist_range = dist.max() - dist.min()
+    if dist_range > 1e-8:
+        # Normalize distances to [0, 1]
+        dist_01 = (dist - dist.min()) / dist_range
+        # Exponential decay: high near sea (0), low inland (1)
+        # Decay factor of 0.05 means 95% weight lost at ~60% inland
+        shore_proximity = np.exp(-5.0 * dist_01).astype(np.float32)
+    else:
+        shore_proximity = np.ones_like(dist, dtype=np.float32)
+
+    # Feature 12: Maximum local slope (in 5-point window)
+    # Cliffs have steep local slopes
+    window = 5
+    half_window = window // 2
+    max_local_slope = np.zeros_like(gradient)
+    for i in range(seq_len):
+        start = max(0, i - half_window)
+        end = min(seq_len, i + half_window + 1)
+        max_local_slope[i] = np.abs(gradient[start:end]).max()
+
+    # Normalize max_local_slope
+    max_slope_range = max_local_slope.max() - max_local_slope.min()
+    if max_slope_range > 1e-8:
+        max_local_slope_norm = (max_local_slope - max_local_slope.min()) / max_slope_range
+    else:
+        max_local_slope_norm = np.zeros_like(max_local_slope)
+
+    # Stack all features (13 features total, all normalized)
     features = np.stack([
-        elev_raw,           # 0
-        elev_norm,          # 1
-        dist_raw,           # 2
-        dist_norm,          # 3
-        gradient,           # 4
-        curvature,          # 5
-        seaward_slope,      # 6
-        landward_slope,     # 7
-        trendline_dev,      # 8
-        slope_change,       # 9
-        convexity,          # 10
-        rel_elevation       # 11
+        elev_norm,              # 0: Normalized elevation
+        dist_norm,              # 1: Normalized distance
+        gradient_norm,          # 2: Normalized gradient
+        curvature_norm,         # 3: Normalized curvature
+        seaward_slope_norm,     # 4: Normalized seaward slope
+        landward_slope_norm,    # 5: Normalized landward slope
+        trendline_dev_norm,     # 6: Normalized trendline deviation
+        slope_change_norm,      # 7: Normalized slope change
+        convexity,              # 8: Convexity index
+        rel_elevation,          # 9: Relative elevation
+        low_elevation_zone,     # 10: Low elevation zone indicator (PHASE 2)
+        shore_proximity,        # 11: Shore proximity weight (PHASE 2)
+        max_local_slope_norm    # 12: Maximum local slope (PHASE 2)
     ], axis=1)
 
     return features.astype(np.float32)
@@ -201,10 +245,10 @@ def clean_transect_data(
     df['Elevation'] = df['Elevation'].interpolate(method='linear')
 
     # 2. Forward fill for remaining NaNs
-    df['Elevation'] = df['Elevation'].fillna(method='ffill')
+    df['Elevation'] = df['Elevation'].ffill()
 
     # 3. Backward fill for remaining NaNs
-    df['Elevation'] = df['Elevation'].fillna(method='bfill')
+    df['Elevation'] = df['Elevation'].bfill()
 
     return df
 
@@ -219,13 +263,14 @@ def create_soft_labels(
     Create soft (Gaussian-smoothed) segmentation labels.
 
     Instead of hard 0/1 labels at a single point, creates a Gaussian
-    distribution centered on the ground truth position.
+    distribution centered on the ground truth position. Sigma is made
+    adaptive to transect length for consistent learning across sequences.
 
     Args:
         distances: Array of NEAR_DIST values [seq_len]
         base_dist: Ground truth cliff base distance
         top_dist: Ground truth cliff top distance
-        sigma: Standard deviation of Gaussian (meters)
+        sigma: Base standard deviation of Gaussian (meters)
 
     Returns:
         Soft labels array of shape [seq_len, 3] with columns:
@@ -233,11 +278,19 @@ def create_soft_labels(
     """
     seq_len = len(distances)
 
+    # Make sigma adaptive to transect length
+    # For a transect with 200 points and sigma=2.0, we want consistent behavior
+    # Scale sigma proportionally to the average point spacing
+    dist_range = distances.max() - distances.min()
+    avg_point_spacing = dist_range / max(seq_len - 1, 1)
+    # Adaptive sigma: maintain ~2-3 points within 1 sigma
+    adaptive_sigma = max(sigma, avg_point_spacing * 2.0)
+
     # Gaussian around base
-    base_labels = np.exp(-0.5 * ((distances - base_dist) / sigma) ** 2)
+    base_labels = np.exp(-0.5 * ((distances - base_dist) / adaptive_sigma) ** 2)
 
     # Gaussian around top
-    top_labels = np.exp(-0.5 * ((distances - top_dist) / sigma) ** 2)
+    top_labels = np.exp(-0.5 * ((distances - top_dist) / adaptive_sigma) ** 2)
 
     # Background is complement
     max_cliff = np.maximum(base_labels, top_labels)
@@ -331,7 +384,7 @@ def preprocess_transect(
 
     Returns:
         Dictionary with:
-            'features': [seq_len, 12] feature array
+            'features': [seq_len, 10] feature array (all normalized)
             'seg_labels': [seq_len, 3] soft labels or [seq_len] hard labels
             'reg_labels': [seq_len, 2] regression targets (if ground truth provided)
             'distances': [seq_len] NEAR_DIST values

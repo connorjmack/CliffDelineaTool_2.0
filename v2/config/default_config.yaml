@@ -21,13 +21,13 @@ model:
 features:
   n_vert: 20  # Local slope window size (must match v1.0)
   seg_tolerance: 2.0  # Soft label sigma (meters)
-  input_dim: 12  # Number of features per point
+  input_dim: 13  # Number of features per point (10 original + 3 geomorphological)
 
 # Training
 training:
   batch_size: 16
   num_epochs: 100
-  learning_rate: 0.001
+  learning_rate: 0.0001  # Reduced from 0.001 for normalized features
   optimizer: "Adam"
   weight_decay: 0.0001
   grad_clip: 1.0
@@ -53,11 +53,19 @@ loss:
   lambda_reg: 0.5
   lambda_conf: 0.3
   lambda_smooth: 0.1
+  # PHASE 3: Geomorphological penalties
+  lambda_elev_penalty: 0.2  # Elevation penalty weight
+  lambda_width_penalty: 0.15  # Width penalty weight
 
   # Segmentation loss (focal loss)
-  class_weights: [1.0, 50.0, 50.0]  # [background, base, top]
+  class_weights: [1.0, 200.0, 200.0]  # [background, base, top] - Increased for extreme imbalance
   focal_gamma: 2.0
   focal_alpha: [0.25, 1.0, 1.0]
+
+  # PHASE 3: Geomorphological constraint parameters
+  max_base_elevation: 15.0  # Maximum elevation for cliff base (meters)
+  max_cliff_width: 150.0  # Maximum cliff width (meters)
+  typical_cliff_width: 100.0  # Typical cliff width (meters)
 
 # Post-processing
 postprocess:
@@ -65,13 +73,17 @@ postprocess:
   smooth_window: 10
   outlier_std_threshold: 2.0
   min_base_top_distance: 5.0  # Minimum distance between base and top (meters)
+  # PHASE 1: Geomorphological constraints
+  max_base_elevation: 15.0  # Maximum elevation for cliff base (meters)
+  max_cliff_width: 150.0  # Maximum cliff width (meters)
+  typical_cliff_width: 100.0  # Typical cliff width for corrections (meters)
 
 # Data splits (AOI assignments)
 data:
   train_aois: [1, 2, 3]
   val_aois: [4]
   test_aois: [5, 6, 7, 8]
-  data_root: "../datasets"
+  data_root: "../../datasets"  # Fixed: point to root-level datasets directory
 
 # Paths
 paths:

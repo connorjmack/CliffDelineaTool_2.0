@@ -197,6 +197,129 @@ def _gp_smooth(
     return smoothed
 
 
+def apply_geomorphological_constraints(
+    predictions_df: pd.DataFrame,
+    transect_data: dict,
+    max_base_elevation: float = 15.0,
+    max_cliff_width: float = 150.0,
+    typical_cliff_width: float = 100.0
+) -> pd.DataFrame:
+    """
+    Apply geomorphological constraints based on coastal physics.
+
+    PHASE 1 CONSTRAINTS:
+    1. Cliff bases occur at low elevations (typically 0-15m)
+    2. Cliff widths are reasonable (10-150m, typically ~100m)
+    3. Base must be seaward of and lower elevation than top
+
+    Args:
+        predictions_df: DataFrame with TransectID, base_distance, top_distance
+        transect_data: Dictionary mapping transect_id -> transect data dict with:
+            - 'distances': array of distances from sea
+            - 'features': array of features (first column is normalized elevation)
+            - 'elevations': array of actual elevations (if available)
+        max_base_elevation: Maximum elevation for cliff base (meters)
+        max_cliff_width: Maximum cliff width (meters)
+        typical_cliff_width: Typical cliff width for correction (meters)
+
+    Returns:
+        Corrected predictions DataFrame
+    """
+    df = predictions_df.copy()
+    n_corrected_base = 0
+    n_corrected_top = 0
+    n_corrected_width = 0
+
+    for idx, row in df.iterrows():
+        transect_id = row['TransectID']
+        base_pred = row['base_distance']
+        top_pred = row['top_distance']
+
+        # Skip if no valid predictions
+        if base_pred <= 0 or top_pred <= 0:
+            continue
+
+        # Get transect data
+        if transect_id not in transect_data:
+            continue
+
+        data = transect_data[transect_id]
+        distances = data['distances']
+
+        # Get elevation profile (denormalize if needed)
+        if 'elevations' in data and data['elevations'] is not None:
+            elevations = data['elevations']
+        else:
+            # Use normalized elevation scaled to approximate real elevations
+            elev_norm = data['features'][:, 0]
+            elevations = elev_norm * 50  # Approximate denormalization
+
+        # CONSTRAINT 1: Check base elevation
+        base_idx = np.argmin(np.abs(distances - base_pred))
+        base_elev = elevations[base_idx]
+
+        if base_elev > max_base_elevation:
+            # Base is too high - find steep slope in low elevation zone
+            low_elev_mask = elevations < max_base_elevation
+
+            if low_elev_mask.any():
+                # Compute slope magnitude
+                gradients = np.abs(np.gradient(elevations, distances))
+
+                # Find steepest point in low elevation zone
+                low_elev_indices = np.where(low_elev_mask)[0]
+                steep_idx = low_elev_indices[np.argmax(gradients[low_elev_indices])]
+
+                # Update base prediction
+                base_pred = distances[steep_idx]
+                n_corrected_base += 1
+
+        # CONSTRAINT 2: Check cliff width
+        cliff_width = top_pred - base_pred
+
+        if cliff_width > max_cliff_width:
+            # Cliff too wide - cap at typical width
+            top_pred = base_pred + typical_cliff_width
+            n_corrected_width += 1
+            n_corrected_top += 1
+        elif cliff_width < 0:
+            # Base ahead of top - fix by using typical width
+            top_pred = base_pred + typical_cliff_width
+            n_corrected_top += 1
+
+        # CONSTRAINT 3: Ensure base elevation < top elevation
+        top_idx = np.argmin(np.abs(distances - top_pred))
+        top_elev = elevations[top_idx]
+
+        # Recompute base_idx after potential correction
+        base_idx = np.argmin(np.abs(distances - base_pred))
+        base_elev = elevations[base_idx]
+
+        if base_elev >= top_elev:
+            # Find first point landward of base with higher elevation
+            landward_mask = distances > base_pred
+            landward_indices = np.where(landward_mask)[0]
+
+            if len(landward_indices) > 0:
+                higher_elev = elevations[landward_indices] > base_elev
+                if higher_elev.any():
+                    higher_idx = landward_indices[np.where(higher_elev)[0][0]]
+                    top_pred = distances[higher_idx]
+                    n_corrected_top += 1
+
+        # Update predictions
+        df.at[idx, 'base_distance'] = base_pred
+        df.at[idx, 'top_distance'] = top_pred
+
+    if n_corrected_base > 0 or n_corrected_top > 0 or n_corrected_width > 0:
+        print(f"  Geomorphological corrections:")
+        print(f"    - Bases corrected (high elevation): {n_corrected_base}")
+        print(f"    - Tops corrected (elevation/width): {n_corrected_top}")
+        print(f"    - Widths capped (>{max_cliff_width}m): {n_corrected_width}")
+
+    return df
+
+
 def enforce_constraints(predictions_df: pd.DataFrame, min_distance: float = 5.0) -> pd.DataFrame:
     """
     Enforce physical constraints on predictions.

@@ -98,9 +98,14 @@ class CliffDetectionTrainer:
             lambda_seg=config['loss']['lambda_seg'],
             lambda_reg=config['loss']['lambda_reg'],
             lambda_conf=config['loss']['lambda_conf'],
+            lambda_elev_penalty=config['loss'].get('lambda_elev_penalty', 0.2),
+            lambda_width_penalty=config['loss'].get('lambda_width_penalty', 0.15),
             class_weights=config['loss']['class_weights'],
             focal_gamma=config['loss']['focal_gamma'],
-            focal_alpha=config['loss'].get('focal_alpha', None)
+            focal_alpha=config['loss'].get('focal_alpha', None),
+            max_base_elevation=config['loss'].get('max_base_elevation', 15.0),
+            max_cliff_width=config['loss'].get('max_cliff_width', 150.0),
+            typical_cliff_width=config['loss'].get('typical_cliff_width', 100.0)
         )
 
         # Optimizer
@@ -116,8 +121,7 @@ class CliffDetectionTrainer:
             mode=config['training']['scheduler']['mode'],
             patience=config['training']['scheduler']['patience'],
             factor=config['training']['scheduler']['factor'],
-            min_lr=config['training']['scheduler']['min_lr'],
-            verbose=config['training']['scheduler']['verbose']
+            min_lr=config['training']['scheduler']['min_lr']
         )
 
         # Early stopping
@@ -173,7 +177,10 @@ class CliffDetectionTrainer:
                 'seg_labels': seg_labels,
                 'reg_labels': reg_labels,
                 'base_dist_gt': base_dist_gt,
-                'top_dist_gt': top_dist_gt
+                'top_dist_gt': top_dist_gt,
+                # PHASE 3: Add features and distances for geomorphological penalties
+                'features': features,
+                'distances': distances
             }
             losses = self.criterion(outputs, targets, mask)
 
@@ -247,7 +254,10 @@ class CliffDetectionTrainer:
                     'seg_labels': seg_labels,
                     'reg_labels': reg_labels,
                     'base_dist_gt': base_dist_gt,
-                    'top_dist_gt': top_dist_gt
+                    'top_dist_gt': top_dist_gt,
+                    # PHASE 3: Add features and distances for geomorphological penalties
+                    'features': features,
+                    'distances': distances
                 }
                 losses = self.criterion(outputs, targets, mask)
 

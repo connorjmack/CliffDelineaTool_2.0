@@ -87,6 +87,7 @@ def compute_cliff_detection_metrics(
 ) -> Dict[str, float]:
     """
     Compute comprehensive metrics for both cliff base and top.
+    Includes detection metrics (precision, recall, F1) in addition to position accuracy.
 
     Args:
         base_predictions: [N] predicted base distances
@@ -106,6 +107,41 @@ def compute_cliff_detection_metrics(
     # Combine
     all_metrics = {**base_metrics, **top_metrics}
 
+    # Detection metrics (Precision, Recall, F1)
+    # For base
+    base_gt_has_cliff = (base_ground_truth > 0)
+    base_pred_has_cliff = (base_predictions > 0)
+
+    base_tp = (base_gt_has_cliff & base_pred_has_cliff).sum()
+    base_fp = (~base_gt_has_cliff & base_pred_has_cliff).sum()
+    base_fn = (base_gt_has_cliff & ~base_pred_has_cliff).sum()
+
+    base_precision = base_tp / (base_tp + base_fp + 1e-8) * 100
+    base_recall = base_tp / (base_tp + base_fn + 1e-8) * 100
+    base_f1 = 2 * base_precision * base_recall / (base_precision + base_recall + 1e-8)
+
+    all_metrics['base_precision'] = float(base_precision)
+    all_metrics['base_recall'] = float(base_recall)
+    all_metrics['base_f1'] = float(base_f1)
+    all_metrics['base_detection_rate'] = float(base_recall)  # Detection rate = recall
+
+    # For top
+    top_gt_has_cliff = (top_ground_truth > 0)
+    top_pred_has_cliff = (top_predictions > 0)
+
+    top_tp = (top_gt_has_cliff & top_pred_has_cliff).sum()
+    top_fp = (~top_gt_has_cliff & top_pred_has_cliff).sum()
+    top_fn = (top_gt_has_cliff & ~top_pred_has_cliff).sum()
+
+    top_precision = top_tp / (top_tp + top_fp + 1e-8) * 100
+    top_recall = top_tp / (top_tp + top_fn + 1e-8) * 100
+    top_f1 = 2 * top_precision * top_recall / (top_precision + top_recall + 1e-8)
+
+    all_metrics['top_precision'] = float(top_precision)
+    all_metrics['top_recall'] = float(top_recall)
+    all_metrics['top_f1'] = float(top_f1)
+    all_metrics['top_detection_rate'] = float(top_recall)
+
     # Overall average metrics
     valid_base = (base_predictions > 0) & (base_ground_truth > 0)
     valid_top = (top_predictions > 0) & (top_ground_truth > 0)
@@ -118,6 +154,16 @@ def compute_cliff_detection_metrics(
 
         all_metrics['overall_MAE'] = float(all_errors.mean())
         all_metrics['overall_Accuracy_2m'] = float((all_errors <= 2.0).mean() * 100)
+
+    # Overall detection metrics
+    overall_precision = (base_precision + top_precision) / 2
+    overall_recall = (base_recall + top_recall) / 2
+    overall_f1 = (base_f1 + top_f1) / 2
+
+    all_metrics['overall_precision'] = float(overall_precision)
+    all_metrics['overall_recall'] = float(overall_recall)
+    all_metrics['overall_f1'] = float(overall_f1)
+    all_metrics['overall_detection_rate'] = float(overall_recall)
 
     return all_metrics
 

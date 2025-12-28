@@ -76,8 +76,9 @@ class CNN_BiLSTM_CliffDetector(nn.Module):
     Hybrid CNN + BiLSTM + Attention architecture for cliff detection.
 
     Architecture:
-        Input [batch, seq_len, 12]
+        Input [batch, seq_len, 10] (all features normalized)
         → 1D-CNN Feature Extractor (3 conv layers)
+        → Batch Normalization
         → BiLSTM Encoder (2 layers)
         → Multi-Head Attention
         → Multi-Task Output Heads:
@@ -88,7 +89,7 @@ class CNN_BiLSTM_CliffDetector(nn.Module):
 
     def __init__(
         self,
-        input_dim: int = 12,
+        input_dim: int = 10,
         cnn_channels: list = [64, 128, 64],
         cnn_kernel_sizes: list = [5, 5, 3],
         cnn_dropout: float = 0.2,
@@ -185,7 +186,7 @@ class CNN_BiLSTM_CliffDetector(nn.Module):
         Forward pass.
 
         Args:
-            x: [batch, seq_len, 12] input features
+            x: [batch, seq_len, 10] input features (all normalized)
             mask: [batch, seq_len] boolean mask (True = valid)
             lengths: [batch] original sequence lengths
 

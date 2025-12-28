@@ -134,24 +134,41 @@ class CliffDetectionLoss(nn.Module):
         lambda_seg: float = 1.0,
         lambda_reg: float = 0.5,
         lambda_conf: float = 0.3,
+        lambda_elev_penalty: float = 0.2,
+        lambda_width_penalty: float = 0.15,
         class_weights: Optional[List[float]] = None,
         focal_gamma: float = 2.0,
-        focal_alpha: Optional[List[float]] = None
+        focal_alpha: Optional[List[float]] = None,
+        max_base_elevation: float = 15.0,
+        max_cliff_width: float = 150.0,
+        typical_cliff_width: float = 100.0
     ):
         """
         Args:
             lambda_seg: Weight for segmentation loss
             lambda_reg: Weight for regression loss
             lambda_conf: Weight for confidence loss
+            lambda_elev_penalty: Weight for elevation penalty (PHASE 3)
+            lambda_width_penalty: Weight for width penalty (PHASE 3)
             class_weights: Class weights for segmentation
             focal_gamma: Gamma parameter for focal loss
             focal_alpha: Alpha parameter for focal loss
+            max_base_elevation: Maximum elevation for cliff base (PHASE 3)
+            max_cliff_width: Maximum cliff width (PHASE 3)
+            typical_cliff_width: Typical cliff width (PHASE 3)
         """
         super().__init__()
 
         self.lambda_seg = lambda_seg
         self.lambda_reg = lambda_reg
         self.lambda_conf = lambda_conf
+        self.lambda_elev_penalty = lambda_elev_penalty
+        self.lambda_width_penalty = lambda_width_penalty
+
+        # PHASE 3: Geomorphological constraints
+        self.max_base_elevation = max_base_elevation
+        self.max_cliff_width = max_cliff_width
+        self.typical_cliff_width = typical_cliff_width
 
         # Segmentation loss (focal loss)
         self.seg_loss_fn = FocalLoss(
@@ -200,12 +217,20 @@ class CliffDetectionLoss(nn.Module):
             mask=mask
         )
 
-        # 2. Regression loss (only on valid masked regions)
+        # 2. Regression loss (weighted by segmentation confidence)
         reg_pred = outputs['regression']  # [batch, seq_len, 2]
         reg_target = targets['reg_labels']  # [batch, seq_len, 2]
 
+        # Get segmentation probabilities for cliff classes (base and top)
+        seg_probs = torch.softmax(outputs['segmentation'], dim=-1)  # [batch, seq_len, 3]
+        cliff_probs = seg_probs[:, :, 1:]  # [batch, seq_len, 2] (base, top only)
+
         reg_loss_per_point = self.reg_loss_fn(reg_pred, reg_target)  # [batch, seq_len, 2]
-        reg_loss_masked = reg_loss_per_point * mask.unsqueeze(-1).float()
+
+        # Weight regression loss by segmentation confidence
+        # Only penalize regression errors where model is confident about cliff presence
+        reg_loss_weighted = reg_loss_per_point * cliff_probs.detach()  # Detach to avoid double gradient
+        reg_loss_masked = reg_loss_weighted * mask.unsqueeze(-1).float()
 
         reg_loss = reg_loss_masked.sum() / (mask.sum() * 2 + 1e-8)
 
@@ -217,22 +242,80 @@ class CliffDetectionLoss(nn.Module):
         conf_pred = outputs['confidence']  # [batch, 1]
         conf_loss = self.conf_loss_fn(conf_pred, has_cliff_gt)
 
+        # PHASE 3: Geomorphological penalties
+        elev_penalty = torch.tensor(0.0, device=reg_pred.device)
+        width_penalty = torch.tensor(0.0, device=reg_pred.device)
+
+        # Only compute penalties if features and distances are provided
+        if 'features' in targets and 'distances' in targets:
+            features = targets['features']  # [batch, seq_len, num_features]
+            distances = targets['distances']  # [batch, seq_len]
+
+            # Get elevation (first feature channel, normalized)
+            # Denormalize: assume 0-1 normalized to 0-50m typical range
+            elevations = features[:, :, 0] * 50.0  # [batch, seq_len]
+
+            # Get predicted base and top positions from regression output
+            # reg_pred: [batch, seq_len, 2] - continuous values (0-1 normalized)
+            # We need to find the argmax along the sequence dimension for each class
+
+            # Get base and top probabilities from segmentation
+            base_probs = seg_probs[:, :, 1]  # [batch, seq_len]
+            top_probs = seg_probs[:, :, 2]  # [batch, seq_len]
+
+            # Find most likely positions (argmax of probabilities)
+            base_indices = torch.argmax(base_probs, dim=1)  # [batch]
+            top_indices = torch.argmax(top_probs, dim=1)  # [batch]
+
+            batch_size = features.shape[0]
+            batch_range = torch.arange(batch_size, device=features.device)
+
+            # Get distances at predicted positions
+            base_distances = distances[batch_range, base_indices]  # [batch]
+            top_distances = distances[batch_range, top_indices]  # [batch]
+
+            # Get elevations at predicted positions
+            base_elevations = elevations[batch_range, base_indices]  # [batch]
+
+            # 1. Elevation penalty: Penalize bases at high elevations
+            # Use ReLU to only penalize when elevation > max_base_elevation
+            elev_violation = torch.relu(base_elevations - self.max_base_elevation)
+            # Quadratic penalty for violations
+            elev_penalty = (elev_violation ** 2).mean()
+
+            # 2. Width penalty: Penalize unrealistic cliff widths
+            cliff_widths = top_distances - base_distances  # [batch]
+
+            # Penalize widths that are too large (> max_cliff_width)
+            width_violation_large = torch.relu(cliff_widths - self.max_cliff_width)
+
+            # Penalize widths that are too small (< 10m) or negative
+            width_violation_small = torch.relu(10.0 - cliff_widths)
+
+            # Combined width penalty (quadratic)
+            width_penalty = ((width_violation_large ** 2).mean() +
+                           (width_violation_small ** 2).mean())
+
         # Total loss
         total_loss = (
             self.lambda_seg * seg_loss +
             self.lambda_reg * reg_loss +
-            self.lambda_conf * conf_loss
+            self.lambda_conf * conf_loss +
+            self.lambda_elev_penalty * elev_penalty +
+            self.lambda_width_penalty * width_penalty
         )
 
         return {
             'total_loss': total_loss,
             'seg_loss': seg_loss,
             'reg_loss': reg_loss,
-            'conf_loss': conf_loss
+            'conf_loss': conf_loss,
+            'elev_penalty': elev_penalty,
+            'width_penalty': width_penalty
         }
 
 
-class AlongshoreSmoothness Loss(nn.Module):
+class AlongshoreSmoothnessLoss(nn.Module):
     """
     Alongshore smoothness constraint.
 
