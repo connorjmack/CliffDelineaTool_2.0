@@ -8,7 +8,10 @@
       "Bash(for aoi in aoi5 aoi6 aoi7 aoi8)",
       "Bash(do echo \"=== $aoi ===\")",
       "Bash(done)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(timeout 300 python3:*)",
+      "Bash(while ps aux)",
+      "Bash(do sleep 10)"
     ]
   }
 }
