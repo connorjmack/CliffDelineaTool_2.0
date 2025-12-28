@@ -1,0 +1,40 @@
+# Python virtual environments
+venv/
+env/
+ENV/
+v2/scripts/venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store
+
+# Model weights and large files
+*.pth
+*.pt
+*.h5
+*.hdf5
+
+# Data files (uncomment if needed)
+# *.tif
+# *.tiff
+# *.shp
+# *.geojson
