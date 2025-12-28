@@ -40,13 +40,19 @@ def export_to_shapefiles(
     # Load original points with geometries
     points_gdf = gpd.read_file(points_shapefile)
 
-    # Standardize column names
-    if 'ID_1' in points_gdf.columns and 'TransectID' not in points_gdf.columns:
-        points_gdf.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-    if 'NEAR_DIST' in points_gdf.columns and 'Distance' not in points_gdf.columns:
-        points_gdf.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
-    if 'RASTERVALU' in points_gdf.columns and 'Elevation' not in points_gdf.columns:
-        points_gdf.rename(columns={'RASTERVALU': 'Elevation'}, inplace=True)
+    # Standardize column names (case-insensitive)
+    col_map = {}
+    for col in points_gdf.columns:
+        col_upper = col.upper()
+        if col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in points_gdf.columns:
+            col_map[col] = 'TransectID'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in points_gdf.columns:
+            col_map[col] = 'Distance'
+        elif col_upper == 'RASTERVALU' and 'Elevation' not in points_gdf.columns:
+            col_map[col] = 'Elevation'
+
+    if col_map:
+        points_gdf.rename(columns=col_map, inplace=True)
 
     # Export cliff base
     base_pred_df = predictions_df[predictions_df['base_distance'] > 0].copy()
@@ -193,13 +199,27 @@ def compare_with_ground_truth(
     base_true = gpd.read_file(base_true_shapefile)
     top_true = gpd.read_file(top_true_shapefile)
 
-    # Standardize column names
-    if 'ID_1' in base_true.columns:
-        base_true.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-        top_true.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-    if 'NEAR_DIST' in base_true.columns:
-        base_true.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
-        top_true.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
+    # Standardize column names (case-insensitive)
+    col_map_base = {}
+    for col in base_true.columns:
+        col_upper = col.upper()
+        if col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in base_true.columns:
+            col_map_base[col] = 'TransectID'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in base_true.columns:
+            col_map_base[col] = 'Distance'
+
+    col_map_top = {}
+    for col in top_true.columns:
+        col_upper = col.upper()
+        if col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in top_true.columns:
+            col_map_top[col] = 'TransectID'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in top_true.columns:
+            col_map_top[col] = 'Distance'
+
+    if col_map_base:
+        base_true.rename(columns=col_map_base, inplace=True)
+    if col_map_top:
+        top_true.rename(columns=col_map_top, inplace=True)
 
     # Merge predictions with ground truth
     comparison_df = predictions_df.copy()

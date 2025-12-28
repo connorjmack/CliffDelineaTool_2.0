@@ -1,0 +1,103 @@
+# CliffDelineaTool v2.0 Configuration - ALL AOIs Training
+# This config trains on ALL 8 AOIs to capture geographic diversity including Point Conception
+
+# Model architecture
+model:
+  name: "CNN_BiLSTM"
+  cnn:
+    channels: [64, 128, 64]
+    kernel_sizes: [5, 5, 3]
+    dropout: 0.2
+  lstm:
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.3
+    bidirectional: true
+  attention:
+    num_heads: 8
+    dim: 256
+    dropout: 0.1
+
+# Feature engineering
+features:
+  n_vert: 20  # Local slope window size (must match v1.0)
+  seg_tolerance: 2.0  # Soft label sigma (meters)
+  input_dim: 13  # Number of features per point (10 original + 3 geomorphological)
+
+# Training
+training:
+  batch_size: 16
+  num_epochs: 100
+  learning_rate: 0.0001  # Reduced from 0.001 for normalized features
+  optimizer: "Adam"
+  weight_decay: 0.0001
+  grad_clip: 1.0
+
+  # Learning rate schedule
+  scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    patience: 5
+    factor: 0.5
+    min_lr: 0.00001
+    verbose: true
+
+  # Early stopping
+  early_stopping:
+    patience: 15
+    monitor: "val_loss"
+    mode: "min"
+
+# Loss weights
+loss:
+  lambda_seg: 1.0
+  lambda_reg: 0.5
+  lambda_conf: 0.3
+  lambda_smooth: 0.1
+  # PHASE 3: Geomorphological penalties
+  lambda_elev_penalty: 0.2  # Elevation penalty weight
+  lambda_width_penalty: 0.15  # Width penalty weight
+
+  # Segmentation loss (focal loss)
+  class_weights: [1.0, 200.0, 200.0]  # [background, base, top] - Increased for extreme imbalance
+  focal_gamma: 2.0
+  focal_alpha: [0.25, 1.0, 1.0]
+
+  # PHASE 3: Geomorphological constraint parameters
+  max_base_elevation: 15.0  # Maximum elevation for cliff base (meters)
+  max_cliff_width: 150.0  # Maximum cliff width (meters)
+  typical_cliff_width: 100.0  # Typical cliff width (meters)
+
+# Post-processing
+postprocess:
+  confidence_threshold: 0.5
+  smooth_window: 10
+  outlier_std_threshold: 2.0
+  min_base_top_distance: 5.0  # Minimum distance between base and top (meters)
+  # PHASE 1: Geomorphological constraints
+  max_base_elevation: 15.0  # Maximum elevation for cliff base (meters)
+  max_cliff_width: 150.0  # Maximum cliff width (meters)
+  typical_cliff_width: 100.0  # Typical cliff width for corrections (meters)
+
+# Data splits (AOI assignments)
+# NEW STRATEGY: Train on ALL 8 AOIs to capture geographic diversity
+# This includes Point Conception (AOI 8) with its complex morphology
+data:
+  train_aois: [1, 2, 3, 4, 5, 6, 7, 8]  # ALL AOIs for maximum diversity
+  val_aois: [5, 6, 7, 8]  # Use validation AOIs for validation during training
+  test_aois: [5, 6, 7, 8]  # Same as validation for final evaluation
+  data_root: "../../datasets"
+  use_augmentation: true
+  use_soft_labels: true
+
+# Paths
+paths:
+  data: "../data/preprocessed"
+  experiments: "experiments/runs_all_aois"
+  checkpoints: "experiments/runs_all_aois/checkpoints"
+  logs: "experiments/runs_all_aois/logs"
+  outputs: "outputs_all_aois"
+
+# Device
+device: "cuda"  # or "cpu"
+seed: 42

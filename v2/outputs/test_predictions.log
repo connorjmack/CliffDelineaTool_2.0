@@ -1,0 +1,7 @@
+usage: 04_predict.py [-h] --checkpoint CHECKPOINT [--aoi_path AOI_PATH]
+                     [--data_root DATA_ROOT]
+                     [--aoi_list AOI_LIST [AOI_LIST ...]]
+                     [--dataset_type DATASET_TYPE] [--output_dir OUTPUT_DIR]
+                     [--postprocess] [--export_shapefiles]
+                     [--compare_ground_truth] [--device DEVICE]
+04_predict.py: error: the following arguments are required: --checkpoint

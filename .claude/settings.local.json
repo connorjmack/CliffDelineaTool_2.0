@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(ls:*)",
+      "Bash(gdalinfo:*)",
+      "Bash(for aoi in aoi5 aoi6 aoi7 aoi8)",
+      "Bash(do echo \"=== $aoi ===\")",
+      "Bash(done)",
+      "Bash(python3:*)"
     ]
   }
 }

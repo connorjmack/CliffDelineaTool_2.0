@@ -1,0 +1,37 @@
+================================================================================
+CliffDelineaTool v2.0 - Training
+================================================================================
+
+Set random seed: 42
+
+Configuration:
+  Training data: ../data/preprocessed/train.pt
+  Validation data: ../data/preprocessed/val.pt
+  Device: cpu
+  Batch size: 16
+  Number of epochs: 100
+  Learning rate: 0.0001
+  Weight decay: 0.0001
+  Data augmentation: enabled (strong)
+
+Loading datasets...
+Loaded 647 transects from ../data/preprocessed/train.pt
+Loaded 132 transects from ../data/preprocessed/val.pt
+  Training batches: 41
+  Validation batches: 9
+
+Creating model...
+  Total parameters: 1,093,318
+  Trainable parameters: 1,093,318
+
+================================================================================
+================================================================================
+Starting Training
+================================================================================
+Device: cpu
+Number of epochs: 100
+Training samples: 647
+Validation samples: 132
+Batch size: 16
+================================================================================
+Epoch 1 [Train]:   0%|          | 0/41 [00:00<?, ?it/s]Epoch 1 [Train]:   0%|          | 0/41 [00:02<?, ?it/s, loss=734, seg=0.181, reg=35.9]Epoch 1 [Train]:   2%|▏         | 1/41 [00:02<01:37,  2.43s/it, loss=734, seg=0.181, reg=35.9]Epoch 1 [Train]:   2%|▏         | 1/41 [00:05<01:37,  2.43s/it, loss=1.99e+3, seg=0.139, reg=37.2]Epoch 1 [Train]:   5%|▍         | 2/41 [00:05<01:38,  2.51s/it, loss=1.99e+3, seg=0.139, reg=37.2]Epoch 1 [Train]:   5%|▍         | 2/41 [00:07<01:38,  2.51s/it, loss=1.01e+3, seg=0.108, reg=29.8]Epoch 1 [Train]:   7%|▋         | 3/41 [00:07<01:36,  2.55s/it, loss=1.01e+3, seg=0.108, reg=29.8]Epoch 1 [Train]:   7%|▋         | 3/41 [00:10<01:36,  2.55s/it, loss=1.56e+3, seg=0.0886, reg=25.6]Epoch 1 [Train]:  10%|▉         | 4/41 [00:10<01:33,  2.52s/it, loss=1.56e+3, seg=0.0886, reg=25.6]Epoch 1 [Train]:  10%|▉         | 4/41 [00:12<01:33,  2.52s/it, loss=2.79e+3, seg=0.071, reg=28.3] Epoch 1 [Train]:  12%|█▏        | 5/41 [00:12<01:32,  2.57s/it, loss=2.79e+3, seg=0.071, reg=28.3]Epoch 1 [Train]:  12%|█▏        | 5/41 [00:15<01:32,  2.57s/it, loss=1.98e+3, seg=0.0614, reg=27] Epoch 1 [Train]:  15%|█▍        | 6/41 [00:15<01:30,  2.59s/it, loss=1.98e+3, seg=0.0614, reg=27]Epoch 1 [Train]:  15%|█▍        | 6/41 [00:17<01:30,  2.59s/it, loss=4.84e+3, seg=0.0486, reg=30.2]Epoch 1 [Train]:  17%|█▋        | 7/41 [00:17<01:27,  2.56s/it, loss=4.84e+3, seg=0.0486, reg=30.2]Epoch 1 [Train]:  17%|█▋        | 7/41 [00:18<01:27,  2.56s/it, loss=1.44e+3, seg=0.0615, reg=12.9]Epoch 1 [Train]:  20%|█▉        | 8/41 [00:18<01:07,  2.03s/it, loss=1.44e+3, seg=0.0615, reg=12.9]Epoch 1 [Train]:  20%|█▉        | 8/41 [00:21<01:07,  2.03s/it, loss=1.68e+3, seg=0.0423, reg=24.2]Epoch 1 [Train]:  22%|██▏       | 9/41 [00:21<01:09,  2.17s/it, loss=1.68e+3, seg=0.0423, reg=24.2]Epoch 1 [Train]:  22%|██▏       | 9/41 [00:23<01:09,  2.17s/it, loss=1.76e+3, seg=0.0453, reg=16.4]Epoch 1 [Train]:  24%|██▍       | 10/41 [00:23<01:11,  2.31s/it, loss=1.76e+3, seg=0.0453, reg=16.4]Epoch 1 [Train]:  24%|██▍       | 10/41 [00:26<01:11,  2.31s/it, loss=2.66e+3, seg=0.0417, reg=18]  Epoch 1 [Train]:  27%|██▋       | 11/41 [00:26<01:10,  2.34s/it, loss=2.66e+3, seg=0.0417, reg=18]Epoch 1 [Train]:  27%|██▋       | 11/41 [00:28<01:10,  2.34s/it, loss=425, seg=0.0515, reg=13.6]  Epoch 1 [Train]:  29%|██▉       | 12/41 [00:28<01:09,  2.39s/it, loss=425, seg=0.0515, reg=13.6]Epoch 1 [Train]:  29%|██▉       | 12/41 [00:31<01:09,  2.39s/it, loss=1.28e+3, seg=0.0394, reg=16.4]Epoch 1 [Train]:  32%|███▏      | 13/41 [00:31<01:09,  2.48s/it, loss=1.28e+3, seg=0.0394, reg=16.4]Epoch 1 [Train]:  32%|███▏      | 13/41 [00:33<01:09,  2.48s/it, loss=1.39e+3, seg=0.0375, reg=15.6]Epoch 1 [Train]:  34%|███▍      | 14/41 [00:33<01:06,  2.46s/it, loss=1.39e+3, seg=0.0375, reg=15.6]Epoch 1 [Train]:  34%|███▍      | 14/41 [00:36<01:06,  2.46s/it, loss=416, seg=0.0336, reg=19.1]    Epoch 1 [Train]:  37%|███▋      | 15/41 [00:36<01:04,  2.46s/it, loss=416, seg=0.0336, reg=19.1]Epoch 1 [Train]:  37%|███▋      | 15/41 [00:38<01:04,  2.46s/it, loss=299, seg=0.0349, reg=19.5]Epoch 1 [Train]:  39%|███▉      | 16/41 [00:38<01:01,  2.46s/it, loss=299, seg=0.0349, reg=19.5]Epoch 1 [Train]:  39%|███▉      | 16/41 [00:41<01:01,  2.46s/it, loss=331, seg=0.0427, reg=15.3]Epoch 1 [Train]:  41%|████▏     | 17/41 [00:41<00:59,  2.47s/it, loss=331, seg=0.0427, reg=15.3]Epoch 1 [Train]:  41%|████▏     | 17/41 [00:42<00:59,  2.47s/it, loss=243, seg=0.0469, reg=8.89]Epoch 1 [Train]:  44%|████▍     | 18/41 [00:42<00:45,  2.00s/it, loss=243, seg=0.0469, reg=8.89]Epoch 1 [Train]:  44%|████▍     | 18/41 [00:43<00:45,  2.00s/it, loss=171, seg=0.0489, reg=8.71]Epoch 1 [Train]:  46%|████▋     | 19/41 [00:43<00:37,  1.69s/it, loss=171, seg=0.0489, reg=8.71]Epoch 1 [Train]:  46%|████▋     | 19/41 [00:45<00:37,  1.69s/it, loss=217, seg=0.038, reg=14.2] Epoch 1 [Train]:  49%|████▉     | 20/41 [00:45<00:41,  1.97s/it, loss=217, seg=0.038, reg=14.2]Epoch 1 [Train]:  49%|████▉     | 20/41 [00:46<00:41,  1.97s/it, loss=311, seg=0.0461, reg=7.89]Epoch 1 [Train]:  51%|█████     | 21/41 [00:46<00:32,  1.64s/it, loss=311, seg=0.0461, reg=7.89]Epoch 1 [Train]:  51%|█████     | 21/41 [00:49<00:32,  1.64s/it, loss=1.27e+3, seg=0.0388, reg=14.2]Epoch 1 [Train]:  54%|█████▎    | 22/41 [00:49<00:36,  1.94s/it, loss=1.27e+3, seg=0.0388, reg=14.2]Epoch 1 [Train]:  54%|█████▎    | 22/41 [00:51<00:36,  1.94s/it, loss=1.01e+3, seg=0.0392, reg=15.1]Epoch 1 [Train]:  56%|█████▌    | 23/41 [00:51<00:38,  2.12s/it, loss=1.01e+3, seg=0.0392, reg=15.1]Epoch 1 [Train]:  56%|█████▌    | 23/41 [00:53<00:38,  2.12s/it, loss=2.93e+3, seg=0.0283, reg=24.2]Epoch 1 [Train]:  59%|█████▊    | 24/41 [00:53<00:34,  2.04s/it, loss=2.93e+3, seg=0.0283, reg=24.2]Epoch 1 [Train]:  59%|█████▊    | 24/41 [00:56<00:34,  2.04s/it, loss=242, seg=0.0388, reg=15.6]    Epoch 1 [Train]:  61%|██████    | 25/41 [00:56<00:36,  2.26s/it, loss=242, seg=0.0388, reg=15.6]Epoch 1 [Train]:  61%|██████    | 25/41 [00:59<00:36,  2.26s/it, loss=306, seg=0.0335, reg=17.3]Epoch 1 [Train]:  63%|██████▎   | 26/41 [00:59<00:36,  2.43s/it, loss=306, seg=0.0335, reg=17.3]Epoch 1 [Train]:  63%|██████▎   | 26/41 [01:01<00:36,  2.43s/it, loss=449, seg=0.0379, reg=13.7]Epoch 1 [Train]:  66%|██████▌   | 27/41 [01:01<00:34,  2.50s/it, loss=449, seg=0.0379, reg=13.7]

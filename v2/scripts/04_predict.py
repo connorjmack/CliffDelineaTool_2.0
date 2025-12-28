@@ -62,15 +62,21 @@ def load_and_preprocess_aoi(aoi_path: Path, n_vert: int = 20):
 
     points = pd.read_csv(points_file)
 
-    # Standardize column names
-    if 'FID' in points.columns and 'PointID' not in points.columns:
-        points.rename(columns={'FID': 'PointID'}, inplace=True)
-    if 'ID_1' in points.columns and 'TransectID' not in points.columns:
-        points.rename(columns={'ID_1': 'TransectID'}, inplace=True)
-    if 'RASTERVALU' in points.columns and 'Elevation' not in points.columns:
-        points.rename(columns={'RASTERVALU': 'Elevation'}, inplace=True)
-    if 'NEAR_DIST' in points.columns and 'Distance' not in points.columns:
-        points.rename(columns={'NEAR_DIST': 'Distance'}, inplace=True)
+    # Standardize column names (case-insensitive)
+    col_map = {}
+    for col in points.columns:
+        col_upper = col.upper()
+        if col_upper == 'FID' and 'PointID' not in points.columns:
+            col_map[col] = 'PointID'
+        elif col_upper in ['ID_1', 'OBJECTID'] and 'TransectID' not in points.columns:
+            col_map[col] = 'TransectID'
+        elif col_upper == 'RASTERVALU' and 'Elevation' not in points.columns:
+            col_map[col] = 'Elevation'
+        elif col_upper == 'NEAR_DIST' and 'Distance' not in points.columns:
+            col_map[col] = 'Distance'
+
+    if col_map:
+        points.rename(columns=col_map, inplace=True)
 
     # Process each transect
     transects = []

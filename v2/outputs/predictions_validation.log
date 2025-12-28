@@ -1,0 +1,179 @@
+================================================================================
+CliffDelineaTool v2.0 - Prediction
+================================================================================
+Warning: CUDA not available, using CPU
+
+Loading checkpoint: experiments/runs/checkpoints/best_model.pth
+  Checkpoint epoch: 10
+  Best validation loss: 6.892160
+
+Creating model...
+
+--------------------------------------------------------------------------------
+Processing aoi5
+--------------------------------------------------------------------------------
+
+Processing aoi5...
+  Preprocessed 170 transects
+
+Running inference...
+  0%|          | 0/170 [00:00<?, ?it/s]  8%|▊         | 13/170 [00:00<00:01, 121.59it/s] 15%|█▌        | 26/170 [00:00<00:01, 124.74it/s] 23%|██▎       | 39/170 [00:00<00:01, 126.13it/s] 31%|███       | 52/170 [00:00<00:00, 125.23it/s] 38%|███▊      | 65/170 [00:00<00:00, 125.14it/s] 46%|████▌     | 78/170 [00:00<00:00, 125.00it/s] 54%|█████▎    | 91/170 [00:00<00:00, 124.73it/s] 61%|██████    | 104/170 [00:00<00:00, 124.71it/s] 69%|██████▉   | 117/170 [00:00<00:00, 124.54it/s] 76%|███████▋  | 130/170 [00:01<00:00, 124.36it/s] 84%|████████▍ | 143/170 [00:01<00:00, 124.58it/s] 92%|█████████▏| 156/170 [00:01<00:00, 124.49it/s] 99%|█████████▉| 169/170 [00:01<00:00, 124.30it/s]100%|██████████| 170/170 [00:01<00:00, 124.62it/s]
+
+Predictions summary:
+  Total transects: 170
+  Valid predictions: 170
+  Invalid/rejected: 0
+
+Applying post-processing...
+Post-processing predictions...
+  Input: 170 transects
+  Valid predictions before processing: 170
+  base_distance: Replaced 14 outliers out of 170 valid predictions
+  top_distance: Replaced 13 outliers out of 170 valid predictions
+  Valid predictions after processing: 170
+  Removed: 0 transects
+Exported predictions to ../outputs/predictions_validation/aoi5/predictions.csv
+
+Exporting shapefiles...
+Exporting predictions to shapefiles...
+  Points source: ../../datasets/validation/aoi5/aoi5_points.shp
+  Output directory: ../outputs/predictions_validation/aoi5
+  Saved 170 base points to ../outputs/predictions_validation/aoi5/base_predicted.shp
+  Saved 170 top points to ../outputs/predictions_validation/aoi5/top_predicted.shp
+
+Comparing with ground truth...
+Exported predictions to ../outputs/predictions_validation/aoi5/comparison.csv
+  Base MAE: 0.54 m
+  Top MAE: 1.53 m
+
+Results saved to: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/predictions_validation/aoi5
+
+--------------------------------------------------------------------------------
+Processing aoi6
+--------------------------------------------------------------------------------
+
+Processing aoi6...
+  Preprocessed 240 transects
+
+Running inference...
+  0%|          | 0/240 [00:00<?, ?it/s]  2%|▎         | 6/240 [00:00<00:04, 55.50it/s]  5%|▌         | 12/240 [00:00<00:04, 56.06it/s]  8%|▊         | 18/240 [00:00<00:03, 56.41it/s] 10%|█         | 24/240 [00:00<00:03, 56.73it/s] 12%|█▎        | 30/240 [00:00<00:03, 56.60it/s] 15%|█▌        | 36/240 [00:00<00:03, 56.92it/s] 18%|█▊        | 42/240 [00:00<00:03, 57.07it/s] 20%|██        | 48/240 [00:00<00:03, 56.98it/s] 22%|██▎       | 54/240 [00:00<00:03, 56.77it/s] 25%|██▌       | 60/240 [00:01<00:03, 56.83it/s] 28%|██▊       | 66/240 [00:01<00:03, 56.79it/s] 30%|███       | 72/240 [00:01<00:02, 57.00it/s] 32%|███▎      | 78/240 [00:01<00:02, 57.09it/s] 35%|███▌      | 84/240 [00:01<00:02, 57.03it/s] 38%|███▊      | 90/240 [00:01<00:02, 56.95it/s] 40%|████      | 96/240 [00:01<00:02, 56.99it/s] 42%|████▎     | 102/240 [00:01<00:02, 57.25it/s] 45%|████▌     | 108/240 [00:01<00:02, 57.31it/s] 48%|████▊     | 114/240 [00:02<00:02, 57.47it/s] 50%|█████     | 120/240 [00:02<00:02, 57.20it/s] 52%|█████▎    | 126/240 [00:02<00:01, 57.29it/s] 55%|█████▌    | 132/240 [00:02<00:01, 57.40it/s] 57%|█████▊    | 138/240 [00:02<00:01, 57.20it/s] 60%|██████    | 144/240 [00:02<00:01, 57.27it/s] 62%|██████▎   | 150/240 [00:02<00:01, 57.10it/s] 65%|██████▌   | 156/240 [00:02<00:01, 56.72it/s] 68%|██████▊   | 162/240 [00:02<00:01, 57.12it/s] 70%|███████   | 168/240 [00:02<00:01, 57.10it/s] 72%|███████▎  | 174/240 [00:03<00:01, 57.08it/s] 75%|███████▌  | 180/240 [00:03<00:01, 56.87it/s] 78%|███████▊  | 186/240 [00:03<00:00, 57.00it/s] 80%|████████  | 192/240 [00:03<00:00, 56.83it/s] 82%|████████▎ | 198/240 [00:03<00:00, 56.75it/s] 85%|████████▌ | 204/240 [00:03<00:00, 57.13it/s] 88%|████████▊ | 210/240 [00:03<00:00, 57.43it/s] 90%|█████████ | 216/240 [00:03<00:00, 57.74it/s] 92%|█████████▎| 222/240 [00:03<00:00, 57.89it/s] 95%|█████████▌| 228/240 [00:03<00:00, 58.00it/s] 98%|█████████▊| 234/240 [00:04<00:00, 57.85it/s]100%|██████████| 240/240 [00:04<00:00, 57.91it/s]100%|██████████| 240/240 [00:04<00:00, 57.16it/s]
+
+Predictions summary:
+  Total transects: 240
+  Valid predictions: 240
+  Invalid/rejected: 0
+
+Applying post-processing...
+Post-processing predictions...
+  Input: 240 transects
+  Valid predictions before processing: 240
+  base_distance: Replaced 11 outliers out of 240 valid predictions
+  top_distance: Replaced 10 outliers out of 240 valid predictions
+  Valid predictions after processing: 240
+  Removed: 0 transects
+Exported predictions to ../outputs/predictions_validation/aoi6/predictions.csv
+
+Exporting shapefiles...
+Exporting predictions to shapefiles...
+  Points source: ../../datasets/validation/aoi6/aoi6_points.shp
+  Output directory: ../outputs/predictions_validation/aoi6
+  Saved 240 base points to ../outputs/predictions_validation/aoi6/base_predicted.shp
+  Saved 240 top points to ../outputs/predictions_validation/aoi6/top_predicted.shp
+
+Comparing with ground truth...
+Exported predictions to ../outputs/predictions_validation/aoi6/comparison.csv
+  Base MAE: 1.48 m
+  Top MAE: 4.11 m
+
+Results saved to: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/predictions_validation/aoi6
+
+--------------------------------------------------------------------------------
+Processing aoi7
+--------------------------------------------------------------------------------
+
+Processing aoi7...
+  Preprocessed 150 transects
+
+Running inference...
+  0%|          | 0/150 [00:00<?, ?it/s]  3%|▎         | 5/150 [00:00<00:02, 49.54it/s]  7%|▋         | 10/150 [00:00<00:02, 48.63it/s] 10%|█         | 15/150 [00:00<00:02, 48.78it/s] 13%|█▎        | 20/150 [00:00<00:02, 49.13it/s] 17%|█▋        | 25/150 [00:00<00:02, 49.05it/s] 20%|██        | 30/150 [00:00<00:02, 48.96it/s] 23%|██▎       | 35/150 [00:00<00:02, 49.20it/s] 27%|██▋       | 40/150 [00:00<00:02, 49.29it/s] 30%|███       | 45/150 [00:00<00:02, 49.30it/s] 33%|███▎      | 50/150 [00:01<00:02, 49.40it/s] 37%|███▋      | 55/150 [00:01<00:01, 49.57it/s] 40%|████      | 60/150 [00:01<00:01, 49.52it/s] 43%|████▎     | 65/150 [00:01<00:01, 49.22it/s] 47%|████▋     | 70/150 [00:01<00:01, 49.35it/s] 50%|█████     | 75/150 [00:01<00:01, 49.15it/s] 53%|█████▎    | 80/150 [00:01<00:01, 49.32it/s] 57%|█████▋    | 85/150 [00:01<00:01, 49.31it/s] 60%|██████    | 90/150 [00:01<00:01, 49.22it/s] 63%|██████▎   | 95/150 [00:01<00:01, 49.37it/s] 67%|██████▋   | 100/150 [00:02<00:01, 49.25it/s] 70%|███████   | 105/150 [00:02<00:00, 49.21it/s] 73%|███████▎  | 110/150 [00:02<00:00, 49.13it/s] 77%|███████▋  | 115/150 [00:02<00:00, 48.81it/s] 80%|████████  | 120/150 [00:02<00:00, 49.03it/s] 83%|████████▎ | 125/150 [00:02<00:00, 49.00it/s] 87%|████████▋ | 130/150 [00:02<00:00, 48.84it/s] 90%|█████████ | 135/150 [00:02<00:00, 48.88it/s] 93%|█████████▎| 140/150 [00:02<00:00, 48.93it/s] 97%|█████████▋| 145/150 [00:02<00:00, 48.66it/s]100%|██████████| 150/150 [00:03<00:00, 48.93it/s]100%|██████████| 150/150 [00:03<00:00, 49.12it/s]
+
+Predictions summary:
+  Total transects: 150
+  Valid predictions: 150
+  Invalid/rejected: 0
+
+Applying post-processing...
+Post-processing predictions...
+  Input: 150 transects
+  Valid predictions before processing: 150
+  base_distance: Replaced 6 outliers out of 150 valid predictions
+  top_distance: Replaced 4 outliers out of 150 valid predictions
+  Valid predictions after processing: 150
+  Removed: 0 transects
+Exported predictions to ../outputs/predictions_validation/aoi7/predictions.csv
+
+Exporting shapefiles...
+Exporting predictions to shapefiles...
+  Points source: ../../datasets/validation/aoi7/aoi7_points.shp
+  Output directory: ../outputs/predictions_validation/aoi7
+  Saved 150 base points to ../outputs/predictions_validation/aoi7/base_predicted.shp
+  Saved 150 top points to ../outputs/predictions_validation/aoi7/top_predicted.shp
+
+Comparing with ground truth...
+Exported predictions to ../outputs/predictions_validation/aoi7/comparison.csv
+  Base MAE: 3.25 m
+  Top MAE: 3.36 m
+
+Results saved to: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/predictions_validation/aoi7
+
+--------------------------------------------------------------------------------
+Processing aoi8
+--------------------------------------------------------------------------------
+
+Processing aoi8...
+  Preprocessed 216 transects
+
+Running inference...
+  0%|          | 0/216 [00:00<?, ?it/s]  1%|▏         | 3/216 [00:00<00:07, 27.85it/s]  3%|▎         | 6/216 [00:00<00:07, 28.89it/s]  5%|▍         | 10/216 [00:00<00:07, 29.39it/s]  6%|▌         | 13/216 [00:00<00:06, 29.26it/s]  7%|▋         | 16/216 [00:00<00:06, 29.39it/s]  9%|▉         | 19/216 [00:00<00:06, 29.23it/s] 10%|█         | 22/216 [00:00<00:06, 29.34it/s] 12%|█▏        | 25/216 [00:00<00:06, 29.10it/s] 13%|█▎        | 28/216 [00:00<00:06, 29.03it/s] 14%|█▍        | 31/216 [00:01<00:06, 28.95it/s] 16%|█▌        | 34/216 [00:01<00:06, 28.90it/s] 17%|█▋        | 37/216 [00:01<00:06, 28.98it/s] 19%|█▊        | 40/216 [00:01<00:06, 29.01it/s] 20%|█▉        | 43/216 [00:01<00:05, 28.99it/s] 21%|██▏       | 46/216 [00:01<00:05, 28.76it/s] 23%|██▎       | 49/216 [00:01<00:05, 28.81it/s] 24%|██▍       | 52/216 [00:01<00:05, 28.76it/s] 25%|██▌       | 55/216 [00:01<00:05, 28.98it/s] 27%|██▋       | 58/216 [00:01<00:05, 29.03it/s] 28%|██▊       | 61/216 [00:02<00:05, 29.00it/s] 30%|██▉       | 64/216 [00:02<00:05, 28.91it/s] 31%|███       | 67/216 [00:02<00:05, 28.92it/s] 32%|███▏      | 70/216 [00:02<00:05, 29.01it/s] 34%|███▍      | 73/216 [00:02<00:04, 29.09it/s] 35%|███▌      | 76/216 [00:02<00:04, 29.18it/s] 37%|███▋      | 79/216 [00:02<00:04, 29.11it/s] 38%|███▊      | 82/216 [00:02<00:04, 29.08it/s] 39%|███▉      | 85/216 [00:02<00:04, 29.07it/s] 41%|████      | 88/216 [00:03<00:04, 28.91it/s] 42%|████▏     | 91/216 [00:03<00:04, 28.87it/s] 44%|████▎     | 94/216 [00:03<00:04, 28.83it/s] 45%|████▍     | 97/216 [00:03<00:04, 28.89it/s] 46%|████▋     | 100/216 [00:03<00:04, 28.96it/s] 48%|████▊     | 103/216 [00:03<00:03, 28.92it/s] 49%|████▉     | 106/216 [00:03<00:03, 28.96it/s] 50%|█████     | 109/216 [00:03<00:03, 28.86it/s] 52%|█████▏    | 112/216 [00:03<00:03, 28.82it/s] 53%|█████▎    | 115/216 [00:03<00:03, 28.76it/s] 55%|█████▍    | 118/216 [00:04<00:03, 28.73it/s] 56%|█████▌    | 121/216 [00:04<00:03, 28.78it/s] 57%|█████▋    | 124/216 [00:04<00:03, 28.72it/s] 59%|█████▉    | 127/216 [00:04<00:03, 28.72it/s] 60%|██████    | 130/216 [00:04<00:02, 28.81it/s] 62%|██████▏   | 133/216 [00:04<00:02, 28.96it/s] 63%|██████▎   | 136/216 [00:04<00:02, 29.02it/s] 64%|██████▍   | 139/216 [00:04<00:02, 28.96it/s] 66%|██████▌   | 142/216 [00:04<00:02, 29.06it/s] 68%|██████▊   | 146/216 [00:05<00:02, 29.59it/s] 69%|██████▉   | 150/216 [00:05<00:02, 29.76it/s] 71%|███████▏  | 154/216 [00:05<00:02, 29.83it/s] 73%|███████▎  | 158/216 [00:05<00:01, 30.02it/s] 75%|███████▌  | 162/216 [00:05<00:01, 30.14it/s] 77%|███████▋  | 166/216 [00:05<00:01, 30.21it/s] 79%|███████▊  | 170/216 [00:05<00:01, 30.27it/s] 81%|████████  | 174/216 [00:05<00:01, 30.30it/s] 82%|████████▏ | 178/216 [00:06<00:01, 30.28it/s] 84%|████████▍ | 182/216 [00:06<00:01, 30.42it/s] 86%|████████▌ | 186/216 [00:06<00:00, 30.57it/s] 88%|████████▊ | 190/216 [00:06<00:00, 30.76it/s] 90%|████████▉ | 194/216 [00:06<00:00, 30.84it/s] 92%|█████████▏| 198/216 [00:06<00:00, 30.77it/s] 94%|█████████▎| 202/216 [00:06<00:00, 30.81it/s] 95%|█████████▌| 206/216 [00:06<00:00, 30.80it/s] 97%|█████████▋| 210/216 [00:07<00:00, 30.76it/s] 99%|█████████▉| 214/216 [00:07<00:00, 30.84it/s]100%|██████████| 216/216 [00:07<00:00, 29.50it/s]
+
+Predictions summary:
+  Total transects: 216
+  Valid predictions: 216
+  Invalid/rejected: 0
+
+Applying post-processing...
+Post-processing predictions...
+  Input: 216 transects
+  Valid predictions before processing: 216
+  base_distance: Replaced 14 outliers out of 216 valid predictions
+  top_distance: Replaced 12 outliers out of 216 valid predictions
+  Valid predictions after processing: 216
+  Removed: 0 transects
+Exported predictions to ../outputs/predictions_validation/aoi8/predictions.csv
+
+Exporting shapefiles...
+Exporting predictions to shapefiles...
+  Points source: ../../datasets/validation/aoi8/aoi8_points.shp
+  Output directory: ../outputs/predictions_validation/aoi8
+  Saved 216 base points to ../outputs/predictions_validation/aoi8/base_predicted.shp
+  Saved 216 top points to ../outputs/predictions_validation/aoi8/top_predicted.shp
+
+Comparing with ground truth...
+Exported predictions to ../outputs/predictions_validation/aoi8/comparison.csv
+  Base MAE: 3.31 m
+  Top MAE: 36.26 m
+
+Results saved to: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/predictions_validation/aoi8
+
+================================================================================
+Prediction complete!
+================================================================================
+
+Output directory: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/predictions_validation
+
+Generated files:
+  - predictions.csv: Predicted cliff positions
+  - base_predicted.shp: Cliff base shapefile
+  - top_predicted.shp: Cliff top shapefile
+  - comparison.csv: Predictions vs ground truth
+================================================================================

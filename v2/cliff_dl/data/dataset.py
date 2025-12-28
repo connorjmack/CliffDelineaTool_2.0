@@ -227,7 +227,7 @@ def create_dataset_from_aois(
         data_root: Root directory of datasets (e.g., '../datasets')
         aoi_list: List of AOI numbers (e.g., [1, 2, 3])
         output_path: Where to save preprocessed .pt file
-        dataset_type: 'calibration' or 'validation'
+        dataset_type: 'calibration' or 'validation' (ignored if auto-detecting)
         n_vert: Window size for local slope calculation
         seg_tolerance: Tolerance for label creation
         use_soft_labels: Use soft (Gaussian) labels
@@ -236,7 +236,13 @@ def create_dataset_from_aois(
     all_transects = []
 
     for aoi_num in aoi_list:
-        aoi_path = data_root / dataset_type / f"aoi{aoi_num}"
+        # Auto-detect folder: AOIs 1-4 are in calibration, AOIs 5-8 are in validation
+        if aoi_num <= 4:
+            folder = 'calibration'
+        else:
+            folder = 'validation'
+
+        aoi_path = data_root / folder / f"aoi{aoi_num}"
         if not aoi_path.exists():
             print(f"Warning: AOI path not found: {aoi_path}, skipping")
             continue

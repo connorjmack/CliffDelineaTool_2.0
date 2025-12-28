@@ -1,0 +1,37 @@
+================================================================================
+CliffDelineaTool v2.0 - Training
+================================================================================
+
+Set random seed: 42
+
+Configuration:
+  Training data: ../data/preprocessed/train.pt
+  Validation data: ../data/preprocessed/val.pt
+  Device: cpu
+  Batch size: 16
+  Number of epochs: 100
+  Learning rate: 0.0001
+  Weight decay: 0.0001
+  Data augmentation: enabled (strong)
+
+Loading datasets...
+Loaded 1480 transects from ../data/preprocessed/train.pt
+Loaded 776 transects from ../data/preprocessed/val.pt
+  Training batches: 93
+  Validation batches: 49
+
+Creating model...
+  Total parameters: 1,093,318
+  Trainable parameters: 1,093,318
+
+================================================================================
+================================================================================
+Starting Training
+================================================================================
+Device: cpu
+Number of epochs: 100
+Training samples: 1480
+Validation samples: 776
+Batch size: 16
+================================================================================
+Epoch 1 [Train]:   0%|          | 0/93 [00:00<?, ?it/s]
