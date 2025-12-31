@@ -85,40 +85,43 @@ def load_model(checkpoint_path, input_dim=13):
     model.eval()
     return model
 
-def sample_elevation_from_raster(line_geom, raster_src, step=1.0):
+def sample_elevation_from_raster(line_geom, raster_data, raster_transform, raster_nodata, step=1.0):
     """
-    Interpolates points along a LineString at 'step' intervals 
-    and samples elevation from the provided opened raster source.
+    Interpolates points along a LineString at 'step' intervals
+    and samples elevation from the provided raster data array.
     """
     length = line_geom.length
     distances = np.arange(0, length, step)
-    
+
     data_points = []
-    
+
     for dist in distances:
         # Get point at distance
         point = line_geom.interpolate(dist)
-        
-        # Sample raster
-        # index returns (row, col)
+
+        # Sample raster - convert coordinates to array indices
         try:
-            row, col = raster_src.index(point.x, point.y)
-            # Read value (assuming single band DEM)
-            val = raster_src.read(1)[row, col]
-            
-            # Filter NoData (often extremely negative or -9999)
-            if val < -100 or val == raster_src.nodata:
+            row, col = rasterio.transform.rowcol(raster_transform, point.x, point.y)
+
+            # Check bounds
+            if row < 0 or col < 0 or row >= raster_data.shape[0] or col >= raster_data.shape[1]:
                 continue
-                
+
+            val = raster_data[row, col]
+
+            # Filter NoData (often extremely negative or -9999)
+            if val < -100 or (raster_nodata is not None and val == raster_nodata):
+                continue
+
             data_points.append({
                 'Distance': dist,
                 'Elevation': float(val),
                 'geometry': point
             })
-        except IndexError:
+        except (IndexError, ValueError):
             # Point outside raster bounds
             continue
-            
+
     return pd.DataFrame(data_points)
 
 def process_shapefile_with_dem(shp_path, dem_path):
@@ -132,7 +135,7 @@ def process_shapefile_with_dem(shp_path, dem_path):
 
     # Find ID column - try multiple common names
     id_col = None
-    possible_id_cols = ['TransectID', 'OBJECTID', 'FID', 'ID', 'id', 'fid', 'objectid']
+    possible_id_cols = ['TransectID', 'OBJECTID', 'FID', 'ID', 'Id', 'id', 'fid', 'objectid']
     for col in possible_id_cols:
         if col in gdf.columns:
             id_col = col
@@ -148,18 +151,25 @@ def process_shapefile_with_dem(shp_path, dem_path):
         print(f"  Using '{id_col}' as TransectID column")
 
     transects = []
-    
+
     with rasterio.open(dem_path) as src:
+        # Read the entire raster once for efficiency
+        print(f"  Reading DEM into memory...")
+        raster_data = src.read(1)
+        raster_transform = src.transform
+        raster_nodata = src.nodata
+        print(f"  DEM loaded: {raster_data.shape}")
+
         for idx, row in tqdm(gdf.iterrows(), total=len(gdf), desc="Extracting Profiles"):
             geom = row.geometry
             tid = row[id_col]
-            
+
             if geom.geom_type != 'LineString':
                 continue
-                
+
             # Extract profile
-            df = sample_elevation_from_raster(geom, src, step=SAMPLING_STEP)
-            
+            df = sample_elevation_from_raster(geom, raster_data, raster_transform, raster_nodata, step=SAMPLING_STEP)
+
             # Validation
             if len(df) > 10:
                 transects.append({
@@ -167,7 +177,7 @@ def process_shapefile_with_dem(shp_path, dem_path):
                     'data': df,
                     'geometry': df.geometry.tolist()
                 })
-                
+
     return transects
 
 def extract_features_v2(df):
@@ -242,13 +252,16 @@ def predict_transects(model, transects):
     with torch.no_grad():
         for t in tqdm(transects, desc="Predicting"):
             input_tensor = extract_features_v2(t['data']).to(DEVICE)
-            
-            seg_logits, reg_offsets, confidence = model(input_tensor)
-            
+
+            outputs = model(input_tensor)
+            seg_logits = outputs['segmentation']
+            reg_offsets = outputs['regression']
+            confidence = outputs['confidence']
+
             probs = torch.softmax(seg_logits, dim=-1)
             base_probs = probs[0, :, 1].cpu().numpy()
             top_probs = probs[0, :, 2].cpu().numpy()
-            conf_score = torch.sigmoid(confidence).item()
+            conf_score = confidence[0, 0].item()  # Already has sigmoid applied in model
             
             base_idx = np.argmax(base_probs)
             top_idx = np.argmax(top_probs)
