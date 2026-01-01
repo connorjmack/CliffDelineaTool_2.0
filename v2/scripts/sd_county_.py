@@ -170,6 +170,24 @@ def process_shapefile_with_dem(shp_path, dem_path):
             # Extract profile
             df = sample_elevation_from_raster(geom, raster_data, raster_transform, raster_nodata, step=SAMPLING_STEP)
 
+            # Check if transect is reversed (cliff on left instead of right)
+            # In a normal transect, elevation should increase from sea to land
+            # If the first half has higher mean elevation than second half, it's reversed
+            if len(df) > 10:
+                mid_idx = len(df) // 2
+                first_half_elev = df.iloc[:mid_idx]['Elevation'].mean()
+                second_half_elev = df.iloc[mid_idx:]['Elevation'].mean()
+
+                # If first half is higher, transect is reversed - flip it
+                if first_half_elev > second_half_elev:
+                    # Reverse the dataframe
+                    df = df.iloc[::-1].reset_index(drop=True)
+                    # Recalculate distances from 0
+                    max_dist = df['Distance'].max()
+                    df['Distance'] = max_dist - df['Distance']
+                    # Reverse geometry list
+                    df['geometry'] = df['geometry'].tolist()[::-1]
+
             # Validation
             if len(df) > 10:
                 transects.append({
@@ -360,7 +378,7 @@ def plot_transect_with_predictions(transect_data, predictions_row, output_path):
     ax.set_ylabel('Elevation (m)', fontsize=12, fontweight='bold')
     ax.set_title(f'Transect ID: {predictions_row["TransectID"]}',
                  fontsize=14, fontweight='bold', pad=15)
-    ax.legend(loc='upper right', fontsize=10, framealpha=0.95)
+    ax.legend(loc='upper left', fontsize=10, framealpha=0.95)
     ax.grid(True, alpha=0.3, linestyle='--')
 
     plt.tight_layout()
@@ -369,37 +387,43 @@ def plot_transect_with_predictions(transect_data, predictions_row, output_path):
 
     return True
 
-def create_location_gif(transects, results_df, location_name, output_dir):
+def create_location_gif(transects, results_df, location_name, output_dir, sample_every=10):
     """
     Create a GIF visualization for all transects at a location.
+
+    Args:
+        transects: List of transect data
+        results_df: DataFrame with predictions
+        location_name: Name for the output file
+        output_dir: Directory to save output
+        sample_every: Include every Nth transect (default: 10)
     """
     print(f"  Creating GIF for {location_name}...")
+    print(f"  Sampling every {sample_every} transects to avoid file limit issues...")
 
     frames_dir = output_dir / f'{location_name}_frames'
     frames_dir.mkdir(exist_ok=True)
 
     frames = []
 
-    # Create a dictionary mapping TransectID to transect data for quick lookup
-    transect_dict = {t['id']: t for t in transects}
+    # Sample every Nth transect and result row together
+    sampled_indices = list(range(0, len(transects), sample_every))
 
-    for i, (idx, row) in enumerate(tqdm(results_df.iterrows(),
-                                        total=len(results_df),
-                                        desc=f"  Generating {location_name} frames")):
-        transect_id = row['TransectID']
-
-        if transect_id not in transect_dict:
+    for i, idx in enumerate(tqdm(sampled_indices,
+                                 desc=f"  Generating {location_name} frames")):
+        if idx >= len(transects) or idx >= len(results_df):
             continue
 
-        transect_data = transect_dict[transect_id]
+        transect_data = transects[idx]
+        result_row = results_df.iloc[idx]
         frame_path = frames_dir / f"frame_{i:04d}.png"
 
         try:
-            success = plot_transect_with_predictions(transect_data, row, frame_path)
+            success = plot_transect_with_predictions(transect_data, result_row, frame_path)
             if success:
                 frames.append(frame_path)
         except Exception as e:
-            print(f"    Warning: Could not create frame for transect {transect_id}: {e}")
+            print(f"    Warning: Could not create frame for transect index {idx}: {e}")
             continue
 
     if not frames:
@@ -410,16 +434,28 @@ def create_location_gif(transects, results_df, location_name, output_dir):
     print(f"    Generated {len(frames)} frames")
     print(f"    Creating GIF...")
 
-    # Create GIF
-    images = [Image.open(f) for f in frames]
+    # Create GIF - open images one at a time to avoid "too many open files" error
     gif_path = output_dir / f"{location_name}.gif"
-    images[0].save(
+
+    # Load first image
+    first_image = Image.open(frames[0])
+
+    # Load remaining images
+    remaining_images = []
+    for frame_path in frames[1:]:
+        img = Image.open(frame_path)
+        remaining_images.append(img.copy())  # Copy to memory
+        img.close()  # Close file handle
+
+    # Save GIF
+    first_image.save(
         gif_path,
         save_all=True,
-        append_images=images[1:],
+        append_images=remaining_images,
         duration=500,  # 0.5 second per frame
         loop=0
     )
+    first_image.close()
 
     print(f"    ✓ Saved GIF to {gif_path}")
     print(f"    Size: {gif_path.stat().st_size / 1024 / 1024:.2f} MB")
