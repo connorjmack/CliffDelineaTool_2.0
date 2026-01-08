@@ -364,19 +364,20 @@ def plot_transect_with_predictions(transect_data, predictions_row, output_path):
         ax.axvspan(base_dist, top_dist, alpha=0.15, color='orange',
                   label='Predicted Cliff Zone', zorder=1)
 
-    # Add confidence scores
+    # Add confidence scores - position below the legend in upper left
     conf_text = f'Base Conf: {predictions_row["Base_Confidence"]:.3f}\n'
     conf_text += f'Top Conf: {predictions_row["Top_Confidence"]:.3f}\n'
     conf_text += f'Transect Conf: {predictions_row["Transect_Confidence"]:.3f}'
 
-    ax.text(0.02, 0.98, conf_text,
-            transform=ax.transAxes, fontsize=11, verticalalignment='top',
+    ax.text(0.02, 0.73, conf_text,
+            transform=ax.transAxes, fontsize=11,
+            verticalalignment='top', horizontalalignment='left',
             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
-    # Labels
+    # Labels - use transect_data ID directly to ensure correct display
     ax.set_xlabel('Distance from Sea (m)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Elevation (m)', fontsize=12, fontweight='bold')
-    ax.set_title(f'Transect ID: {predictions_row["TransectID"]}',
+    ax.set_title(f'Transect ID: {transect_data["id"]}',
                  fontsize=14, fontweight='bold', pad=15)
     ax.legend(loc='upper left', fontsize=10, framealpha=0.95)
     ax.grid(True, alpha=0.3, linestyle='--')
