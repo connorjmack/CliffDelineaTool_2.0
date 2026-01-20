@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+title: "CliffDelineaTool 2.0: Deep Learning for Coastal Cliff Detection"
+message: "If you use this software, please cite both the v2.0 implementation and the original v1.0 paper."
+type: software
+authors:
+  - name: "[Your Name]"
+    # orcid: https://orcid.org/0000-0000-0000-0000
+    # affiliation: "[Your Institution]"
+repository-code: "https://github.com/cjmack/CliffDelineaTool_2.0"
+license: MIT
+version: "2.0.0"
+date-released: "2024-12-27"
+keywords:
+  - coastal geomorphology
+  - cliff detection
+  - deep learning
+  - pytorch
+  - coastal erosion
+  - DEM analysis
+
+references:
+  - type: article
+    title: "CliffDelineaTool v1.2.0: an algorithm for identifying coastal cliff base and top positions"
+    authors:
+      - family-names: Swirad
+        given-names: Zuzanna M.
+        orcid: https://orcid.org/0000-0002-3747-5603
+        affiliation: Scripps Institution of Oceanography, UC San Diego
+      - family-names: Young
+        given-names: Adam P.
+        affiliation: Scripps Institution of Oceanography, UC San Diego
+    journal: "Geoscientific Model Development"
+    volume: 15
+    issue: 4
+    start: 1499
+    end: 1512
+    year: 2022
+    doi: 10.5194/gmd-15-1499-2022
+
+  - type: software
+    title: "CliffDelineaTool v1.2.0"
+    authors:
+      - family-names: Swirad
+        given-names: Zuzanna M.
+    version: "1.2.0"
+    doi: 10.5281/zenodo.5724975
+    repository-code: "https://github.com/zswirad/CliffDelineaTool"

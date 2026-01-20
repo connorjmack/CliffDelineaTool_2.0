@@ -1,0 +1,34 @@
+MIT License
+
+Copyright (c) 2024 CliffDelineaTool v2.0 Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+ATTRIBUTION NOTICE
+
+The v2.0 deep learning implementation builds upon CliffDelineaTool v1.0 by:
+
+  Swirad, Z.M. and Young, A.P., 2022. CliffDelineaTool v1.2.0: an algorithm for
+  identifying coastal cliff base and top positions. Geoscientific Model
+  Development, 15(4), pp.1499-1512. https://doi.org/10.5194/gmd-15-1499-2022
+
+The original v1.0 code (in /v1) and training datasets (in /datasets) are from
+Swirad & Young (2022), available at: https://doi.org/10.5281/zenodo.5724975

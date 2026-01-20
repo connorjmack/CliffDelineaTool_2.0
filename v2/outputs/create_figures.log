@@ -1,58 +1,0 @@
-================================================================================
-Creating Output Figures and Visualizations
-================================================================================
-
-Loading comparison data...
-  Loaded 776 transects from 4 AOIs
-  Total valid predictions: 776
-
-Creating metrics summary...
-✓ Saved metrics summary to ../outputs/visualizations/metrics_summary.png
-
-================================================================================
-OVERALL METRICS
-================================================================================
-Base MAE:  7.82 m
-Top MAE:   87.80 m
-Base RMSE: 19.81 m
-Top RMSE:  138.09 m
-================================================================================
-
-Creating scatter plots...
-✓ Saved scatter plots to ../outputs/visualizations/scatter_plots.png
-
-================================================================================
-Creating GIFs
-================================================================================
-
-Creating transect GIF (every 1 transects, max 100)...
-Generating frames:   0%|          | 0/100 [00:00<?, ?it/s]Generating frames:   2%|▏         | 2/100 [00:00<00:07, 13.90it/s]Generating frames:   4%|▍         | 4/100 [00:00<00:06, 14.04it/s]Generating frames:   6%|▌         | 6/100 [00:00<00:06, 14.23it/s]Generating frames:   8%|▊         | 8/100 [00:00<00:06, 14.29it/s]Generating frames:  10%|█         | 10/100 [00:00<00:06, 14.31it/s]Generating frames:  12%|█▏        | 12/100 [00:00<00:06, 13.05it/s]Generating frames:  14%|█▍        | 14/100 [00:01<00:06, 13.40it/s]Generating frames:  16%|█▌        | 16/100 [00:01<00:06, 13.64it/s]Generating frames:  18%|█▊        | 18/100 [00:01<00:05, 13.82it/s]Generating frames:  20%|██        | 20/100 [00:01<00:05, 13.96it/s]Generating frames:  22%|██▏       | 22/100 [00:01<00:05, 13.99it/s]Generating frames:  24%|██▍       | 24/100 [00:01<00:05, 13.99it/s]Generating frames:  26%|██▌       | 26/100 [00:01<00:05, 14.02it/s]Generating frames:  28%|██▊       | 28/100 [00:02<00:05, 13.20it/s]Generating frames:  30%|███       | 30/100 [00:02<00:05, 13.47it/s]Generating frames:  32%|███▏      | 32/100 [00:02<00:04, 13.66it/s]Generating frames:  34%|███▍      | 34/100 [00:02<00:04, 13.85it/s]Generating frames:  36%|███▌      | 36/100 [00:02<00:04, 13.94it/s]Generating frames:  38%|███▊      | 38/100 [00:02<00:04, 14.00it/s]Generating frames:  40%|████      | 40/100 [00:02<00:04, 14.16it/s]Generating frames:  42%|████▏     | 42/100 [00:03<00:04, 13.23it/s]Generating frames:  44%|████▍     | 44/100 [00:03<00:04, 13.48it/s]Generating frames:  46%|████▌     | 46/100 [00:03<00:03, 13.62it/s]Generating frames:  48%|████▊     | 48/100 [00:03<00:03, 13.69it/s]Generating frames:  50%|█████     | 50/100 [00:03<00:03, 13.78it/s]Generating frames:  52%|█████▏    | 52/100 [00:03<00:03, 13.78it/s]Generating frames:  54%|█████▍    | 54/100 [00:03<00:03, 13.85it/s]Generating frames:  56%|█████▌    | 56/100 [00:04<00:03, 13.87it/s]Generating frames:  58%|█████▊    | 58/100 [00:04<00:03, 13.14it/s]Generating frames:  60%|██████    | 60/100 [00:04<00:02, 13.38it/s]Generating frames:  62%|██████▏   | 62/100 [00:04<00:02, 13.56it/s]Generating frames:  64%|██████▍   | 64/100 [00:04<00:02, 13.66it/s]Generating frames:  66%|██████▌   | 66/100 [00:04<00:02, 13.78it/s]Generating frames:  68%|██████▊   | 68/100 [00:04<00:02, 13.90it/s]Generating frames:  70%|███████   | 70/100 [00:05<00:02, 13.90it/s]Generating frames:  72%|███████▏  | 72/100 [00:05<00:02, 13.77it/s]Generating frames:  74%|███████▍  | 74/100 [00:05<00:01, 13.04it/s]Generating frames:  76%|███████▌  | 76/100 [00:05<00:01, 13.23it/s]Generating frames:  78%|███████▊  | 78/100 [00:05<00:01, 13.38it/s]Generating frames:  80%|████████  | 80/100 [00:05<00:01, 13.55it/s]Generating frames:  82%|████████▏ | 82/100 [00:05<00:01, 13.68it/s]Generating frames:  84%|████████▍ | 84/100 [00:06<00:01, 13.71it/s]Generating frames:  86%|████████▌ | 86/100 [00:06<00:01, 13.81it/s]Generating frames:  88%|████████▊ | 88/100 [00:06<00:00, 13.05it/s]Generating frames:  90%|█████████ | 90/100 [00:06<00:00, 13.33it/s]Generating frames:  92%|█████████▏| 92/100 [00:06<00:00, 13.51it/s]Generating frames:  94%|█████████▍| 94/100 [00:06<00:00, 13.53it/s]Generating frames:  96%|█████████▌| 96/100 [00:07<00:00, 13.65it/s]Generating frames:  98%|█████████▊| 98/100 [00:07<00:00, 13.66it/s]Generating frames: 100%|██████████| 100/100 [00:07<00:00, 13.48it/s]Generating frames: 100%|██████████| 100/100 [00:07<00:00, 13.65it/s]
-  Generated 100 frames
-  Creating GIF...
-✓ Saved GIF to ../outputs/visualizations/all_transects.gif
-  Size: 2.43 MB
-  Cleaning up frames...
-
-Creating worst 20 transects GIF...
-  Worst MAE range: 203.82m - 236.29m
-Generating worst frames:   0%|          | 0/20 [00:00<?, ?it/s]Generating worst frames:  10%|█         | 2/20 [00:00<00:01, 11.11it/s]Generating worst frames:  20%|██        | 4/20 [00:00<00:01, 10.11it/s]Generating worst frames:  30%|███       | 6/20 [00:00<00:01, 10.54it/s]Generating worst frames:  40%|████      | 8/20 [00:00<00:01, 10.75it/s]Generating worst frames:  50%|█████     | 10/20 [00:00<00:00, 10.84it/s]Generating worst frames:  60%|██████    | 12/20 [00:01<00:00, 10.92it/s]Generating worst frames:  70%|███████   | 14/20 [00:01<00:00, 10.98it/s]Generating worst frames:  80%|████████  | 16/20 [00:01<00:00, 10.99it/s]Generating worst frames:  90%|█████████ | 18/20 [00:01<00:00, 11.04it/s]Generating worst frames: 100%|██████████| 20/20 [00:01<00:00, 11.11it/s]Generating worst frames: 100%|██████████| 20/20 [00:01<00:00, 10.92it/s]
-  Generated 20 frames
-  Creating GIF...
-✓ Saved worst transects GIF to ../outputs/visualizations/worst_transects.gif
-  Size: 0.44 MB
-✓ Saved worst transects info to ../outputs/visualizations/worst_transects_info.csv
-  Cleaning up frames...
-
-================================================================================
-Complete!
-================================================================================
-
-All outputs saved to: /Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0/v2/scripts/../outputs/visualizations
-
-Generated files:
-  - metrics_summary.png: Metrics plots and error distributions
-  - scatter_plots.png: Predicted vs ground truth scatter plots
-  - all_transects.gif: Animation of transect predictions
-  - worst_transects.gif: Animation of worst performing transects
-  - worst_transects_info.csv: Details of worst performing transects
-================================================================================

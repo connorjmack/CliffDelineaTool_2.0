@@ -1,10 +1,76 @@
-# CliffDelineaTool
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5724975.svg)](https://doi.org/10.5281/zenodo.5724975)</br>
-Latest versions: MATLAB v1.2.0; Python v1.2.0</br></br>
-<em>CliffDelineaTool</em> is an algorithm for mapping coastal cliffs by finding cliff base and top positions along cross-shore transects. Written in MATLAB and available in Python, it takes as input text files with series of points containing information on point ID, transect ID, elevation and distance from the seaward transect ends. Points can contain information on XY coordinates that will be retained for easier incorporation of cliff base and top positions into GIS software. To run the code you need to generate alongshore transects and resample them. Suggestions on how to do it in ArcMap can be found below. See <em>datasets</em> folder for the calibration and validation datasets.</br></br>
-If you use the code, please cite the article: Swirad Z.M. & Young A.P. 2022. CliffDelineaTool v1.2.0: an algorithm for identifying coastal cliff base and top positions. Geoscientific Model Development 15: 1499–1512. https://doi.org/10.5194/gmd-15-1499-2022</br></br>
-<b>How to generate cross-shore transects and points in ArcMap?</b></br>
-Create polylines to delimit seaward and landward extent of transects. Generate equally-spaced points along the seaward polyline (<em>Generate Points along Lines</em>). Add a new field to the Attribute Table of the point shapefile (<em>Calculate Field</em>: ID = FID + 1). Copy the point shapefile. Get the locations of the nearest points along the landward polyline for the point shapefile (<em>Near</em>; tick ‘location’). Extract those nearest points along the landward polyline (<em>Make XY Event Layer</em> of the <em>Near</em> location in point Attribute Table). Append the new point layer to the copied point shapefile (<em>Data Management > Append</em>; 'no test'). Add a new field to the Attribute Table of the appended shapefile (<em>Calculate Field</em>: ID_1 = ID). Convert points to a polyline (<em>Points to Line</em>; field: ID_1). Densify polyline to desired interval (<em>Densify</em>) and use it to create a point shapefile (<em>Feature Vertices to Points</em>). Extract the elevation values for points from DEM (<em>Extract Values to Points</em>). Calculate the distance to the seaward polyline (<em>Near</em>). Export the Attribute Table. For repetitive surveys generate the points only once, and then update only the elevation.</br></br>
-<b>How to import outputs into ArcMap?</b></br>
-Starting from v1.2.0 it is possible to include XY coordinates as point properties and directly import them as XY layer in GIS software.</br>
-For data with no XY information, join the point shapefile with the text file output of <em>CliffDelineaTool</em> (<em>Add Join</em>; use point ID as the 'join field'). Select points that have any values in the model output columns of the Attribute Table (<em>Select by Attribute</em>; e.g. 'Field1>0').  
+# CliffDelineaTool 2.0
+
+A deep learning approach to coastal cliff delineation, building on the original CliffDelineaTool by Swirad & Young (2022).
+
+## Overview
+
+This repository contains two versions of the CliffDelineaTool:
+
+| Version | Approach | Location | Description |
+|---------|----------|----------|-------------|
+| **v2.0** | Deep Learning (CNN-BiLSTM) | [`/v2`](./v2) | PyTorch-based model requiring no manual parameter tuning |
+| **v1.0** | Rule-based thresholds | [`/v1`](./v1) | Original MATLAB/Python implementation by Swirad & Young |
+
+**v2.0 is the recommended version** for new projects. It achieves better accuracy without requiring manual calibration per study site.
+
+## Quick Start (v2.0)
+
+```bash
+cd v2
+pip install -r requirements.txt
+
+# Prepare data, train, and evaluate
+python scripts/01_prepare_data.py --config config/default_config.yaml
+python scripts/02_train_model.py --config config/default_config.yaml
+python scripts/03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
+```
+
+See [`v2/README.md`](./v2/README.md) for full documentation.
+
+## v2.0 vs v1.0 Comparison
+
+| Aspect | v1.0 | v2.0 |
+|--------|------|------|
+| **Manual tuning** | 8+ parameters per AOI | None |
+| **Approach** | Hand-crafted slope thresholds | Learned CNN-BiLSTM features |
+| **Expected MAE** | 3-7m (after tuning) | 2-4m |
+| **Generalization** | Requires recalibration per region | Single model works across regions |
+| **Confidence scores** | No | Yes |
+
+## Repository Structure
+
+```
+CliffDelineaTool_2.0/
+├── v1/                    # Original implementation (Swirad & Young 2022)
+│   ├── CliffDelineaTool.m
+│   ├── CliffDelineaToolPy.py
+│   └── README.md
+├── v2/                    # Deep learning implementation
+│   ├── cliff_dl/          # Python package
+│   ├── scripts/           # Training and inference scripts
+│   ├── config/            # Hyperparameter configs
+│   └── README.md
+└── datasets/              # Calibration and validation data
+    ├── calibration/       # AOI 1-4 (training)
+    └── validation/        # AOI 5-8 (testing)
+```
+
+## Citation
+
+If you use this tool, please cite:
+
+**Original algorithm (v1.0):**
+> Swirad, Z.M. and Young, A.P., 2022. CliffDelineaTool v1.2.0: an algorithm for identifying coastal cliff base and top positions. Geoscientific Model Development, 15(4), pp.1499-1512. https://doi.org/10.5194/gmd-15-1499-2022
+
+**Deep learning implementation (v2.0):**
+> [This repository] - uses training data from Swirad & Young (2022)
+
+## Acknowledgments
+
+- **Original CliffDelineaTool**: Zuzanna M. Swirad (zswirad@ucsd.edu), Scripps Institution of Oceanography, UC San Diego
+- **Training/validation datasets**: From Swirad & Young (2022), DOI: [10.5281/zenodo.5724975](https://doi.org/10.5281/zenodo.5724975)
+- **v2.0 deep learning implementation**: Built using the calibration data from the original work
+
+## License
+
+See [LICENSE](./LICENSE) file.

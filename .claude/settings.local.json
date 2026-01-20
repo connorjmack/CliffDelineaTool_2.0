@@ -11,7 +11,11 @@
       "Bash(python3:*)",
       "Bash(timeout 300 python3:*)",
       "Bash(while ps aux)",
-      "Bash(do sleep 10)"
+      "Bash(do sleep 10)",
+      "Bash(wc:*)",
+      "Bash(xargs ls:*)",
+      "Bash(tree:*)",
+      "WebFetch(domain:zenodo.org)"
     ]
   }
 }
