@@ -1,98 +1,26 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+CliffDelineaTool 2.0: a CNN-BiLSTM-attention model that finds the cliff toe (base) and top on elevation transects. It extends Swirad & Young (2022, v1.2). The goal is a JOSS submission.
 
-## Project Overview
+## Layout
+- `v2/cliff_dl/` is the package (data, models, training, inference); `v2/scripts/` is the numbered pipeline.
+- `v1/` and `datasets/` (AOIs 1–8) are Swirad's and have no named licence. Don't edit, move or relicense them.
 
-CliffDelineaTool 2.0 is a deep learning system for detecting coastal cliff base and top positions from elevation transects. It builds on the original rule-based CliffDelineaTool by Swirad & Young (2022).
-
-- **v1/** - Original MATLAB/Python implementation (rule-based, requires manual tuning)
-- **v2/** - Deep learning implementation (CNN-BiLSTM, no manual tuning required)
-- **datasets/** - Calibration (AOI 1-4) and validation (AOI 5-8) transect data
-
-## Common Commands
-
-All commands run from the `v2/` directory:
-
+## Commands (run from `v2/scripts/`; add `--device cpu` on a Mac)
 ```bash
-# Install package (editable)
-pip install -e .
-
-# Install all dependencies including geospatial
-pip install -r requirements.txt
-
-# Data preparation
-python scripts/01_prepare_data.py --config config/default_config.yaml
-
-# Training
-python scripts/02_train_model.py --config config/default_config.yaml
-
-# Evaluation
-python scripts/03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
-
-# Inference on new AOI
-python scripts/04_predict.py --checkpoint experiments/runs/checkpoints/best_model.pth --aoi_path ../../datasets/validation/aoi5
-
-# Run tests
-pytest tests/
+python 01_prepare_data.py
+python 02_train_model.py
+python 03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
+python 04_predict.py --checkpoint experiments/runs/checkpoints/best_model.pth --aoi_path ../../datasets/validation/aoi5
 ```
+There is no test suite yet; `v2/test_v2_minimal.py` only prints.
 
-## Architecture
+## Invariants
+- The published model is `experiments/runs/checkpoints/best_model.pth`: epoch 10, trained on AOIs 1–3, validated on 4, tested on 5–8, sha256 `e2ea5746…caf1`. It is gitignored. Never overwrite it or retrain into that folder. `runs_all_aois/` is a failed run (epoch 0).
+- Until v2.0.0 is tagged and archived on Zenodo, no change may alter model outputs (preprocessing, model or inference).
+- cliffCast imports `cliff_dl` from this folder (`../CliffDelineaTool_2.0/v2`), so changes here change cliffCast reruns.
+- Each point has 13 features (`preprocessing.compute_features`); `n_vert` = 20 must match v1.
 
-### v2 Package Structure (`v2/cliff_dl/`)
-
-```
-cliff_dl/
-├── data/
-│   ├── preprocessing.py   # Feature engineering (13 features per point)
-│   ├── dataset.py         # PyTorch Dataset for transects
-│   └── loaders.py         # DataLoader with variable-length padding
-├── models/
-│   ├── cnn_lstm.py        # Hybrid 1D-CNN + BiLSTM + Attention architecture
-│   ├── losses.py          # Multi-task loss (focal + smooth L1 + BCE)
-│   └── metrics.py         # MAE, RMSE, R² metrics
-├── training/
-│   └── trainer.py         # Training loop with early stopping
-└── inference/
-    ├── postprocess.py     # Outlier removal, alongshore smoothing
-    └── export.py          # Shapefile export for GIS
-```
-
-### Model Architecture
-
-Input → 1D-CNN (3 layers) → BiLSTM (2 layers, bidirectional) → Multi-Head Attention (8 heads) → Multi-task outputs:
-- Segmentation: [background, cliff_base, cliff_top] probabilities
-- Regression: Distance offsets to base/top
-- Confidence: Has-cliff probability
-
-### Feature Engineering (13 dimensions per point)
-
-Geometric (6): elevation_normalized, distance_normalized, elevation_gradient, elevation_curvature, plus raw values
-Domain from v1 (4): seaward_slope, landward_slope, trendline_deviation, local_slope_change
-Geomorphological (3): convexity_index, relative_elevation, slope_strength
-
-## Configuration
-
-Edit `v2/config/default_config.yaml` for hyperparameters. Key settings:
-
-- `data.train_aois`: [1, 2, 3] - training AOIs
-- `data.val_aois`: [4] - validation AOI
-- `data.test_aois`: [5, 6, 7, 8] - held-out test AOIs
-- `features.n_vert`: 20 - local slope window (must match v1.0)
-- `loss.class_weights`: [1.0, 200.0, 200.0] - handles extreme class imbalance
-
-## Data Format
-
-Input files per AOI (`datasets/calibration/aoi1/`):
-- `aoi1_points.txt` - CSV with FID, TransectID, Elevation (RASTERVALU), Distance (NEAR_DIST)
-- `aoi1_base_true.shp` - Ground truth cliff base positions
-- `aoi1_top_true.shp` - Ground truth cliff top positions
-
-Elevation value of -9999 indicates nodata (interpolated during preprocessing).
-
-## Key Constraints
-
-- Cliff base must be below cliff top (enforced in postprocessing)
-- `max_base_elevation`: 15m - bases above this are penalized
-- `max_cliff_width`: 150m - unreasonable widths are penalized
-- `min_base_top_distance`: 5m - minimum separation between base and top
+## Known issues
+- Post-processing makes test error worse (toe MAE 2.0 m raw, 25.5 m after).
+- `compare_v1_v2.py`, `create_aoi_gifs.py` and `run_v1_validation.py` hardcode `/Users/cjmack/...`.
