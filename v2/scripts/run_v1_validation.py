@@ -201,7 +201,7 @@ def run_v1_on_aoi(aoi_name, data_dir, output_dir):
 def main():
     """Main execution"""
     # Setup paths
-    base_dir = Path("/Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0")
+    base_dir = Path(__file__).resolve().parents[2]  # repository root
     data_dir = base_dir / "datasets" / "validation"
     output_dir = base_dir / "v1_outputs"
     output_dir.mkdir(exist_ok=True)

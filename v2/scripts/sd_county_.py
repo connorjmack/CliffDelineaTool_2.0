@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-Script to apply CliffDelineaTool v2.0 Deep Learning model 
-to specific San Diego beach shapefiles using corresponding DEMs.
+Apply the CliffDelineaTool v2.0 model to transect shapefiles sampled from DEMs.
 
-Usage:
-    Place this script in v2/scripts/ and run:
-    python predict_sandiego_v2.py
+Each --pair names a transect shapefile and the DEM (GeoTIFF) to sample it from. For each
+pair the script writes predictions (CSV), cliff base and top points (shapefiles) and a GIF
+to --output-dir.
+
+Usage (from v2/scripts/):
+    python sd_county_.py --pair transects.shp dem.tif
+    python sd_county_.py --pair a.shp a.tif --pair b.shp b.tif --output-dir ../outputs/my_site
 """
 
+import argparse
 import os
 import sys
 import torch
@@ -34,24 +38,7 @@ from cliff_dl.models.cnn_lstm import CNN_BiLSTM_CliffDetector
 # CONFIGURATION
 # ==========================================
 
-# Dictionary mapping Shapefiles (Transects) to their corresponding DEMs (TIFFs).
-# UPDATE THE TIFF PATHS below with the actual locations of your DEMs.
-DATA_PAIRS = [
-    {
-        "transects": "/Volumes/group/LiDAR/LidarProcessing/LidarProcessingCliffs/utilities/shape_files/transects/1m_transects/DelMarTransects595to620at1m/DelMarTransects595to620at1m.shp",
-        "dem": "/Volumes/group/LiDAR/VMQLZ_Truck/LiDAR_Processed_Level2/20251204_00590_00636_1252_DelMar_NoWaves/Beach_And_Backshore/20251204_00590_00636_1252_DelMar_NoWaves_beach_cliff_ground.tif" # <--- REPLACE THIS
-    },
-    {
-        "transects": "/Volumes/group/LiDAR/LidarProcessing/LidarProcessingCliffs/utilities/shape_files/transects/1m_transects/TorreyTransects567to581at1m/TorreyTransects567to581at1m.shp",
-        "dem": "/Volumes/group/LiDAR/VMQLZ_Truck/LiDAR_Processed_Level2/20251204_00567_00590_1557_Torrey_NoWaves/Beach_And_Backshore/20251204_00567_00590_1557_Torrey_NoWaves_beach_cliff_ground.tif" # <--- REPLACE THIS
-    },
-    {
-        "transects": "/Volumes/group/LiDAR/LidarProcessing/LidarProcessingCliffs/utilities/shape_files/transects/1m_transects/SolanaTransects637to666at1m/SolanaTransects637to666at1m.shp",
-        "dem": "/Volumes/group/LiDAR/VMQLZ_Truck/LiDAR_Processed_Level2/20251117_00636_00683_1443_Solana_Cardiff_NoWaves/Beach_And_Backshore/20251117_00636_00683_1443_Solana_Cardiff_NoWaves_beach_cliff_ground.tif" # <--- REPLACE THIS
-    }
-]
-
-# Path to your trained model weights
+# Defaults; override with --checkpoint and --output-dir
 CHECKPOINT_PATH = parent_dir / "scripts" / "experiments" / "runs" / "checkpoints" / "best_model.pth"
 
 OUTPUT_DIR = parent_dir / "outputs" / "sd_county"
@@ -473,26 +460,33 @@ def create_location_gif(transects, results_df, location_name, output_dir, sample
 # ==========================================
 
 def main():
-    if not OUTPUT_DIR.exists():
-        os.makedirs(OUTPUT_DIR)
-        
-    print(f"Loading model from {CHECKPOINT_PATH}...")
+    parser = argparse.ArgumentParser(description="Apply CliffDelineaTool v2.0 to transects sampled from DEMs.")
+    parser.add_argument("--pair", nargs=2, action="append", required=True, metavar=("TRANSECTS", "DEM"),
+                        help="Transect shapefile and the DEM to sample it from (repeatable)")
+    parser.add_argument("--checkpoint", type=Path, default=CHECKPOINT_PATH,
+                        help=f"Model weights (default: {CHECKPOINT_PATH})")
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR,
+                        help=f"Where results are written (default: {OUTPUT_DIR})")
+    args = parser.parse_args()
+    output_dir = args.output_dir
+
+    if not output_dir.exists():
+        os.makedirs(output_dir)
+
+    print(f"Loading model from {args.checkpoint}...")
     try:
-        model = load_model(CHECKPOINT_PATH)
+        model = load_model(args.checkpoint)
     except Exception as e:
         print(f"Error loading model: {e}")
         return
 
-    for pair in DATA_PAIRS:
-        shp_file = pair["transects"]
-        dem_file = pair["dem"]
+    for shp_file, dem_file in args.pair:
 
         if not os.path.exists(shp_file):
             print(f"Missing Transect file: {shp_file}")
             continue
-        if not os.path.exists(dem_file) or "path/to" in dem_file:
-            print(f"Missing or invalid DEM path: {dem_file}")
-            print("Please update the DATA_PAIRS list in the script.")
+        if not os.path.exists(dem_file):
+            print(f"Missing DEM file: {dem_file}")
             continue
 
         # 1. Load & Extract
@@ -511,7 +505,7 @@ def main():
             base_name = os.path.basename(shp_file).replace('.shp', '')
 
             # CSV
-            results_df.to_csv(OUTPUT_DIR / f"{base_name}_predictions.csv", index=False)
+            results_df.to_csv(output_dir / f"{base_name}_predictions.csv", index=False)
 
             # Shapefiles
             base_gdf = gpd.GeoDataFrame(
@@ -519,20 +513,20 @@ def main():
                 geometry=gpd.points_from_xy(results_df.Base_X, results_df.Base_Y),
                 crs="EPSG:26911"
             )
-            base_gdf.to_file(OUTPUT_DIR / f"{base_name}_base_predicted.shp")
+            base_gdf.to_file(output_dir / f"{base_name}_base_predicted.shp")
 
             top_gdf = gpd.GeoDataFrame(
                 results_df,
                 geometry=gpd.points_from_xy(results_df.Top_X, results_df.Top_Y),
                 crs="EPSG:26911"
             )
-            top_gdf.to_file(OUTPUT_DIR / f"{base_name}_top_predicted.shp")
+            top_gdf.to_file(output_dir / f"{base_name}_top_predicted.shp")
 
-            print(f"  Saved results to {OUTPUT_DIR}")
+            print(f"  Saved results to {output_dir}")
 
             # 4. Create GIF visualization
             try:
-                create_location_gif(transects, results_df, base_name, OUTPUT_DIR)
+                create_location_gif(transects, results_df, base_name, output_dir)
             except Exception as e:
                 print(f"  Error creating GIF: {e}")
         else:

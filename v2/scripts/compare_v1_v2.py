@@ -383,7 +383,7 @@ def main():
     print("="*80)
 
     # Setup paths
-    base_dir = Path("/Users/cjmack/Documents/GitHub/CliffDelineaTool_2.0")
+    base_dir = Path(__file__).resolve().parents[2]  # repository root
     data_dir = base_dir / "datasets" / "validation"
     v1_dir = base_dir / "v1_outputs"
     v2_dir = base_dir / "v2" / "outputs" / "predictions_validation"
