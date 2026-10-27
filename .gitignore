@@ -41,3 +41,6 @@ build/
 
 # Output results
 v2/outputs/
+
+# TensorBoard logs (the published run is archived with the weights)
+v2/scripts/experiments/*/logs/
