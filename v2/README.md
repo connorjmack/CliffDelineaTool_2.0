@@ -1,409 +1,80 @@
 # CliffDelineaTool v2.0
-## Deep Learning for Coastal Cliff Detection
 
-CliffDelineaTool v2.0 is a PyTorch-based deep learning implementation for identifying coastal cliff base and top positions from Digital Elevation Models (DEMs). This version uses a hybrid 1D-CNN + BiLSTM architecture to replace the hand-crafted rule-based approach of v1.0.
+A PyTorch model that finds the coastal cliff base (toe) and top on cross-shore elevation transects. It takes the same input as v1 (Swirad & Young, 2022) but learns the positions from labelled transects instead of using thresholds set for each site.
 
----
+## Install
 
-## Key Features
-
-- **Deep Learning Architecture**: Hybrid 1D-CNN + BiLSTM + Multi-Head Attention
-- **Multi-Task Learning**: Joint segmentation, regression, and confidence prediction
-- **Handles Class Imbalance**: Focal loss with soft labels
-- **Alongshore Consistency**: Post-processing with outlier removal
-- **GIS Integration**: Direct shapefile export compatible with v1.0 workflow
-- **No Manual Tuning**: Single model works across different coastal environments
-
----
-
-## Architecture Overview
-
-```
-Input: 1D Elevation Transect [seq_len, 12 features]
-  ↓
-1D-CNN Feature Extractor (3 layers: 64→128→64 channels)
-  ↓
-BiLSTM Encoder (2 layers, hidden=128, bidirectional)
-  ↓
-Multi-Head Self-Attention (8 heads)
-  ↓
-Multi-Task Outputs:
-  - Segmentation: [background, cliff_base, cliff_top] probabilities
-  - Regression: Distance offsets to base/top
-  - Confidence: Has cliff probability
-```
-
-### Features (12-dimensional per point)
-
-**Geometric Features:**
-1. Raw elevation (m)
-2. Normalized elevation [0,1]
-3. Cross-shore distance (m)
-4. Normalized distance [0,1]
-5. Elevation gradient (∂z/∂x)
-6. Elevation curvature (∂²z/∂x²)
-
-**Domain Features (from v1.0):**
-7. Seaward slope (degrees)
-8. Landward slope (degrees)
-9. Trendline deviation
-10. Local slope change
-11. Convexity index
-12. Relative elevation
-
----
-
-## Installation
-
-### Prerequisites
-
-- Python 3.8+
-- CUDA-capable GPU (recommended) or CPU
-- GDAL/OGR (for geospatial operations)
-
-### Install Dependencies
+Python 3.11 or later.
 
 ```bash
 cd v2
-pip install -r requirements.txt
+pip install -r requirements.txt   # exact environment the published model was trained in
+# or: pip install -e .            # the package with compatible version ranges
 ```
 
-### Install GDAL (if not already installed)
+## Run
 
-**macOS:**
-```bash
-brew install gdal
-pip install gdal==$(gdal-config --version)
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install gdal-bin libgdal-dev
-pip install gdal==$(gdal-config --version)
-```
-
----
-
-## Quick Start
-
-### 1. Prepare Data
-
-Convert raw shapefiles to preprocessed PyTorch tensors:
+From `v2/scripts/`; add `--device cpu` without a CUDA GPU.
 
 ```bash
-cd scripts
-python 01_prepare_data.py --config ../config/default_config.yaml
+python 01c_prepare_data_proper_split.py   # AOIs 1-8 -> ../data/preprocessed/{train,val,test}.pt
+python 02_train_model.py                  # -> experiments/runs/checkpoints/best_model.pth
+python 03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
+python 04_predict.py --checkpoint experiments/runs/checkpoints/best_model.pth --aoi_path ../../datasets/validation/aoi5
 ```
 
-This creates:
-- `data/preprocessed/train.pt` (AOI 1, 2, 3)
-- `data/preprocessed/val.pt` (AOI 4)
-- `data/preprocessed/test.pt` (AOI 5, 6, 7, 8)
+`02_train_model.py` writes to `experiments/runs/`, the folder that holds the published weights. Copy them elsewhere first, or change `paths` in `config/default_config.yaml`.
 
-### 2. Train Model
+To run the model on your own DEMs, use `sd_county_.py --pair TRANSECTS.shp DEM.tif --checkpoint ... --output-dir ...`. It samples each transect from the DEM and writes predictions, base and top shapefiles, and a GIF.
 
-```bash
-python 02_train_model.py --config ../config/default_config.yaml
-```
+## Input and output
 
-Training outputs:
-- Model checkpoints: `experiments/runs/checkpoints/`
-- TensorBoard logs: `experiments/runs/logs/`
-- Best model: `experiments/runs/checkpoints/best_model.pth`
+Each AOI folder follows `datasets/` (see `datasets/readme.md`):
+- `aoiX_points.txt` is the input. It is a CSV with one row per point: `FID`, `ID_1` (transect ID), `RASTERVALU` (elevation in m, −9999 for no data) and `NEAR_DIST` (distance from the seaward end in m).
+- `aoiX_base_true.shp` and `aoiX_top_true.shp` are needed only for training and evaluation.
+- `aoiX_points.shp` is needed only for shapefile export.
 
-### 3. Evaluate Model
+`04_predict.py` writes:
+- `predictions.csv`: per transect, the base and top distance and confidence, plus post-processed `*_smoothed` columns.
+- `base_predicted.shp` and `top_predicted.shp`: the raw positions, with `TransectID`, `Distance` and `Elevation`.
+- `comparison.csv`: written only with `--compare_ground_truth`.
 
-```bash
-python 03_evaluate_model.py \
-    --checkpoint ../experiments/runs/checkpoints/best_model.pth \
-    --test_data ../data/preprocessed/test.pt
-```
+## Model
 
-### 4. Predict on New Data
+- **Features:** 13 per point, computed in `cliff_dl/data/preprocessing.compute_features`:
+  - normalised elevation and distance, gradient and curvature
+  - v1's seaward and landward slopes (`n_vert` = 20), trendline deviation, slope change and convexity
+  - relative elevation, a below-15 m flag, shore proximity and maximum local slope
+- **Network:** a 3-layer 1D CNN (64-128-64 channels), then a 2-layer bidirectional LSTM (hidden size 128), then 8-head self-attention.
+- **Outputs:** three heads give per-point class (background, base, top), per-point distance offsets and a has-cliff confidence.
+- **Loss:** focal loss plus smooth L1, a confidence term and elevation and width penalties.
+- **Settings:** `config/default_config.yaml`.
 
-```bash
-python 04_predict.py \
-    --checkpoint ../experiments/runs/checkpoints/best_model.pth \
-    --aoi_path ../../datasets/validation/aoi5 \
-    --output_dir ../outputs/predictions
-```
+## Published model
 
----
+| | |
+|---|---|
+| Weights | `scripts/experiments/runs/checkpoints/best_model.pth`, sha256 `e2ea574661062a6a7b71b3c703605789988afd33c1bdfe5e624279bba117caf1`. Not in git; to be archived on Zenodo with v2.0.0. |
+| Training | Epoch 10 (lowest validation loss) of a 26-epoch run |
+| Split | `01c`: each of AOIs 1-8 split 70/10/20 by transect, seed 42, giving 1,032 / 146 / 302 transects |
 
-## Project Structure
+Test-set error (302 transects, `03_evaluate_model.py`, raw positions):
 
-```
-v2/
-├── cliff_dl/                      # Main Python package
-│   ├── data/
-│   │   ├── preprocessing.py       # Feature engineering (12 features)
-│   │   ├── dataset.py             # PyTorch Dataset
-│   │   └── loaders.py             # DataLoader with padding
-│   ├── models/
-│   │   ├── cnn_lstm.py            # Hybrid CNN-BiLSTM architecture
-│   │   ├── losses.py              # Multi-task loss (focal + smooth L1)
-│   │   └── metrics.py             # MAE, RMSE, R², accuracy metrics
-│   ├── training/
-│   │   └── trainer.py             # Training loop
-│   └── inference/
-│       ├── postprocess.py         # Outlier removal + smoothing
-│       └── export.py              # Shapefile export
-│
-├── scripts/
-│   ├── 01_prepare_data.py         # Data preprocessing
-│   ├── 02_train_model.py          # Training script
-│   ├── 03_evaluate_model.py       # Evaluation script
-│   └── 04_predict.py              # Inference script
-│
-├── config/
-│   └── default_config.yaml        # Hyperparameters
-│
-├── notebooks/                     # Jupyter notebooks
-│   ├── 01_data_exploration.ipynb
-│   └── 02_model_training.ipynb
-│
-└── README.md                      # This file
-```
+| | MAE | RMSE | Within 2 m | Within 5 m |
+|---|---|---|---|---|
+| Base | 2.0 m | 4.0 m | 81 % | 91 % |
+| Top | 9.5 m | 27.3 m | 68 % | 81 % |
 
----
+## Known limitations
 
-## Configuration
+- **Within-site test only:** the test transects come from the same eight AOIs as the training transects, so these scores do not show how the model does at a new site. A leave-one-AOI-out test has not been run.
+- **Post-processing hurts:** the outlier removal and smoothing in `cliff_dl/inference/postprocess.py` makes test error much worse (base MAE 25.5 m, top 73.1 m). Use the raw positions, which are what the shapefiles contain.
+- **No automated tests:** the repository has none yet.
 
-Edit `config/default_config.yaml` to customize:
+## Other scripts
 
-### Model Architecture
-```yaml
-model:
-  cnn:
-    channels: [64, 128, 64]
-    kernel_sizes: [5, 5, 3]
-    dropout: 0.2
-  lstm:
-    hidden_size: 128
-    num_layers: 2
-    dropout: 0.3
-  attention:
-    num_heads: 8
-    dim: 256
-```
+- `compare_v1_v2.py` and `run_v1_validation.py` run v1 on AOIs 5-8 and compare it with v2.
+- `create_aoi_gifs.py`, `create_output_figures.py`, `create_sample_plots.py` and `visualize_transects.py` make figures and GIFs.
+- `01_prepare_data.py` and `01b_prepare_data_with_aoi8_subset.py` are earlier splits, kept for the record.
 
-### Training Parameters
-```yaml
-training:
-  batch_size: 16
-  num_epochs: 100
-  learning_rate: 0.001
-  weight_decay: 0.0001
-```
-
-### Loss Weights
-```yaml
-loss:
-  lambda_seg: 1.0      # Segmentation loss
-  lambda_reg: 0.5      # Regression loss
-  lambda_conf: 0.3     # Confidence loss
-  class_weights: [1.0, 50.0, 50.0]  # [background, base, top]
-  focal_gamma: 2.0
-```
-
-### Data Splits
-```yaml
-data:
-  train_aois: [1, 2, 3]
-  val_aois: [4]
-  test_aois: [5, 6, 7, 8]
-  data_root: "../datasets"
-```
-
----
-
-## Expected Performance
-
-### v1.0 Baseline (from Swirad & Young 2022)
-- **Validation MAE**: ~3-7m
-- **Requires**: Manual parameter tuning per AOI
-
-### v2.0 Target
-- **Validation MAE**: ~2-4m (30-50% improvement)
-- **Requires**: No manual tuning, single model for all AOIs
-- **Inference**: <1 second per transect on GPU
-
-### Success Criteria
-- ✓ MAE < 4m on test set (AOI 5-8)
-- ✓ Outperforms v1.0 by ≥20%
-- ✓ No manual parameter tuning
-- ✓ Compatible GIS output (shapefiles)
-
----
-
-## Data Format
-
-### Input Requirements
-
-**Per AOI directory** (e.g., `datasets/calibration/aoi1/`):
-```
-aoi1/
-├── aoi1_points.txt              # Point elevations along transects
-├── aoi1_base_true.shp           # Ground truth cliff base
-├── aoi1_top_true.shp            # Ground truth cliff top
-├── aoi1_dem.tif                 # Digital Elevation Model (optional)
-└── aoi1_transects.shp           # Transect polylines (optional)
-```
-
-**Points file format** (`aoi1_points.txt`):
-```csv
-FID,ID_1,RASTERVALU,NEAR_DIST
-0,1,-9999.0,0.0
-1,1,-9999.0,0.99
-2,1,0.537,1.98
-...
-```
-
-- `FID`: Point ID
-- `ID_1`: Transect ID
-- `RASTERVALU`: Elevation (m, -9999 = nodata)
-- `NEAR_DIST`: Distance from seaward end (m)
-
-### Output Format
-
-Predictions are exported as shapefiles compatible with v1.0:
-- `base_predicted.shp`: Cliff base positions
-- `top_predicted.shp`: Cliff top positions
-
-Each shapefile contains:
-- `TransectID`: Transect identifier
-- `Distance`: Predicted cross-shore distance (m)
-- `Elevation`: Elevation at predicted position (m)
-- `Confidence`: Model confidence score (optional)
-- `geometry`: Point geometry (UTM coordinates)
-
----
-
-## Training Tips
-
-### Monitoring Training
-
-Use TensorBoard to monitor training progress:
-```bash
-tensorboard --logdir experiments/runs/logs
-```
-
-View at: http://localhost:6006
-
-### Handling Overfitting
-
-If validation loss increases while training loss decreases:
-1. Increase dropout (cnn: 0.3, lstm: 0.4)
-2. Increase weight decay (0.0005)
-3. Enable data augmentation (noise + vertical shift)
-4. Reduce model size (fewer LSTM layers)
-
-### Improving Performance
-
-If MAE is too high:
-1. Increase model capacity (more channels, larger hidden size)
-2. Adjust loss weights (increase lambda_seg)
-3. Use soft labels with smaller sigma (1.5m instead of 2.0m)
-4. Enable GP smoothing in post-processing
-
----
-
-## Comparison with v1.0
-
-| Feature | v1.0 | v2.0 (Deep Learning) |
-|---------|------|----------------------|
-| **Approach** | Hand-crafted slope thresholds + trendlines | Learned features (CNN-BiLSTM) |
-| **Features** | 4 hand-designed (slopes, trendline deviation) | 12 features (6 geometric + 6 domain) |
-| **Training** | Manual parameter tuning per AOI | End-to-end learning, single model |
-| **Generalization** | Requires calibration per region | Works across multiple regions |
-| **Performance** | MAE ~3-7m | MAE ~2-4m (target) |
-| **Inference** | Fast (Python/MATLAB) | GPU-accelerated |
-| **Uncertainty** | No confidence scores | Outputs confidence per prediction |
-| **Post-processing** | Moving median + OLS outlier removal | Same + optional GP smoothing |
-
----
-
-## Known Limitations
-
-1. **Limited Training Data**: Only 704 calibration transects
-   - Mitigation: Strong regularization, data augmentation
-
-2. **Extreme Class Imbalance**: ~2 labels per 89-653 points
-   - Mitigation: Focal loss, soft labels, multi-task learning
-
-3. **1D Transect-Based**: Doesn't use full 2D DEM context
-   - Future v3.0: Move to 2D semantic segmentation
-
-4. **GPU Recommended**: CPU training is very slow (10-20x slower)
-
----
-
-## Troubleshooting
-
-### GDAL Installation Issues
-
-If `pip install gdal` fails:
-```bash
-# Install system GDAL first
-brew install gdal  # macOS
-sudo apt-get install gdal-bin libgdal-dev  # Ubuntu
-
-# Then install Python bindings
-pip install --global-option=build_ext --global-option="-I/usr/include/gdal" gdal==$(gdal-config --version)
-```
-
-### CUDA Out of Memory
-
-Reduce batch size in `config/default_config.yaml`:
-```yaml
-training:
-  batch_size: 8  # or 4
-```
-
-### Slow Data Loading
-
-Increase number of workers:
-```yaml
-training:
-  num_workers: 4  # Set to number of CPU cores
-```
-
----
-
-## Citation
-
-If you use CliffDelineaTool v2.0, please cite both:
-
-**Original v1.0 Paper:**
-```
-Swirad, Z.M. and Young, A.P., 2022. CliffDelineaTool v1.2.0: an algorithm for
-identifying coastal cliff base and top positions. Geoscientific Model Development,
-15(4), pp.1499-1512. https://doi.org/10.5194/gmd-15-1499-2022
-```
-
-**v2.0 Deep Learning Implementation:**
-```
-[To be published - reference this repository for now]
-https://github.com/yourusername/CliffDelineaTool_2.0
-```
-
----
-
-## License
-
-[Same as v1.0 - specify license here]
-
----
-
-## Contact
-
-For questions, issues, or contributions:
-- Open an issue on GitHub
-
----
-
-## Acknowledgments
-
-- Original algorithm: Swirad & Young (2022)
-- Deep learning implementation: Connor J Mack
-- Training data: Swirad & Young (2022), doi:10.5281/zenodo.5724975
+For citation and licence, see the [root README](../README.md).

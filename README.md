@@ -11,18 +11,19 @@ This repository contains two versions of the CliffDelineaTool:
 | **v2.0** | Deep Learning (CNN-BiLSTM) | [`/v2`](./v2) | PyTorch-based model requiring no manual parameter tuning |
 | **v1.0** | Rule-based thresholds | [`/v1`](./v1) | Original MATLAB/Python implementation by Swirad & Young |
 
-**v2.0 is the recommended version** for new projects. It achieves better accuracy without requiring manual calibration per study site.
+v2.0 needs no calibration per study site. Its accuracy, and the limits of how it was tested, are in [`v2/README.md`](./v2/README.md).
 
 ## Quick Start (v2.0)
 
 ```bash
 cd v2
 pip install -r requirements.txt
+cd scripts
 
-# Prepare data, train, and evaluate
-python scripts/01_prepare_data.py --config config/default_config.yaml
-python scripts/02_train_model.py --config config/default_config.yaml
-python scripts/03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
+# Prepare data, train, and evaluate (add --device cpu without a GPU)
+python 01c_prepare_data_proper_split.py
+python 02_train_model.py
+python 03_evaluate_model.py --checkpoint experiments/runs/checkpoints/best_model.pth
 ```
 
 See [`v2/README.md`](./v2/README.md) for full documentation.
@@ -31,10 +32,8 @@ See [`v2/README.md`](./v2/README.md) for full documentation.
 
 | Aspect | v1.0 | v2.0 |
 |--------|------|------|
-| **Manual tuning** | 8+ parameters per AOI | None |
-| **Approach** | Hand-crafted slope thresholds | Learned CNN-BiLSTM features |
-| **Expected MAE** | 3-7m (after tuning) | 2-4m |
-| **Generalization** | Requires recalibration per region | Single model works across regions |
+| **Manual tuning** | 8 thresholds per AOI ([`datasets/readme.md`](./datasets/readme.md)) | None |
+| **Approach** | Hand-crafted slope thresholds | Learned from labelled transects (CNN-BiLSTM) |
 | **Confidence scores** | No | Yes |
 
 ## Repository Structure
@@ -51,8 +50,8 @@ CliffDelineaTool_2.0/
 │   ├── config/            # Hyperparameter configs
 │   └── README.md
 └── datasets/              # Calibration and validation data
-    ├── calibration/       # AOI 1-4 (training)
-    └── validation/        # AOI 5-8 (testing)
+    ├── calibration/       # AOI 1-4 (v1 calibration)
+    └── validation/        # AOI 5-8 (v1 validation); v2 splits all 8 by transect
 ```
 
 ## Citation
@@ -69,7 +68,7 @@ If you use this tool, please cite:
 
 - **Original CliffDelineaTool**: Zuzanna M. Swirad (zswirad@ucsd.edu), Scripps Institution of Oceanography, UC San Diego
 - **Training/validation datasets**: From Swirad & Young (2022), DOI: [10.5281/zenodo.5724975](https://doi.org/10.5281/zenodo.5724975)
-- **v2.0 deep learning implementation**: Connor J Mack, Scripps Institution of Oceanography, UC San Diego, trained on the calibration data from the original work
+- **v2.0 deep learning implementation**: Connor J Mack, Scripps Institution of Oceanography, UC San Diego, trained on the calibration and validation data from the original work
 
 ## License
 
