@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-Proper Train/Val/Test Split for CliffDelineaTool v2.0
+Train/validation/test split used for the published CliffDelineaTool v2.0 model.
 
-Creates scientifically valid train/validation/test sets with NO OVERLAP.
-Includes geographic diversity by sampling from all 8 AOIs.
+Shuffles the transects of each of the 8 AOIs (seed 42) and splits each AOI 70/10/20 into
+train/validation/test, so every AOI appears in all three sets and no transect is in more
+than one. With the defaults this regenerates data/preprocessed/{train,val,test}.pt and
+split_metadata.json exactly as used for experiments/runs/checkpoints/best_model.pth
+(1,032 / 146 / 302 transects).
 
-Standard split: 70% train, 15% validation, 15% test (stratified by AOI)
+Neighbouring transects of one AOI can fall in different sets, so test scores measure
+performance on new transects at known sites, not at new sites.
+
+Usage (from v2/scripts/):
+    python 01c_prepare_data_proper_split.py
 """
 
 import argparse
@@ -35,14 +42,14 @@ def main():
     parser.add_argument(
         '--val_frac',
         type=float,
-        default=0.15,
-        help='Fraction for validation (default: 0.15)'
+        default=0.10,
+        help='Fraction for validation (default: 0.10)'
     )
     parser.add_argument(
         '--test_frac',
         type=float,
-        default=0.15,
-        help='Fraction for test (default: 0.15)'
+        default=0.20,
+        help='Fraction for test (default: 0.20)'
     )
     parser.add_argument(
         '--seed',

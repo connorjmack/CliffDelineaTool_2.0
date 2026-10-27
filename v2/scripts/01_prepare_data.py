@@ -2,6 +2,9 @@
 """
 Data Preparation Script for CliffDelineaTool v2.0
 
+Superseded: the published model's split comes from 01c_prepare_data_proper_split.py. This
+script splits by whole AOI (data.train_aois / val_aois / test_aois in the config).
+
 Converts raw shapefile data to preprocessed PyTorch tensors ready for training.
 
 Usage:

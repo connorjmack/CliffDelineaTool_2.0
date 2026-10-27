@@ -2,6 +2,9 @@
 """
 Data Preparation Script with AOI8 Subset
 Adds a portion of AOI8 to training to expose model to Point Conception morphology
+
+Superseded: not used for the published model, whose split comes from
+01c_prepare_data_proper_split.py.
 """
 
 import argparse
