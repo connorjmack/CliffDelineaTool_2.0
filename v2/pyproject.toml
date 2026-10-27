@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Coastal Research Lab"}
+    {name = "Connor J Mack"}
 ]
 dependencies = [
     "torch>=2.0",
@@ -26,6 +26,9 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/connorjmack/CliffDelineaTool_2.0"
 
 [tool.setuptools.packages.find]
 where = ["."]

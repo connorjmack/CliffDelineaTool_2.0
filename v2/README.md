@@ -399,12 +399,11 @@ https://github.com/yourusername/CliffDelineaTool_2.0
 
 For questions, issues, or contributions:
 - Open an issue on GitHub
-- Email: [your email]
 
 ---
 
 ## Acknowledgments
 
 - Original algorithm: Swirad & Young (2022)
-- Deep learning implementation: [Your name]
-- Training data: [Data source acknowledgments]
+- Deep learning implementation: Connor J Mack
+- Training data: Swirad & Young (2022), doi:10.5281/zenodo.5724975

@@ -63,13 +63,13 @@ If you use this tool, please cite:
 > Swirad, Z.M. and Young, A.P., 2022. CliffDelineaTool v1.2.0: an algorithm for identifying coastal cliff base and top positions. Geoscientific Model Development, 15(4), pp.1499-1512. https://doi.org/10.5194/gmd-15-1499-2022
 
 **Deep learning implementation (v2.0):**
-> [This repository] - uses training data from Swirad & Young (2022)
+> Mack, C. J. (2026). CliffDelineaTool 2.0 (version 2.0.0) [Software]. https://github.com/connorjmack/CliffDelineaTool_2.0. A DOI will be added at release; see [CITATION.cff](./CITATION.cff).
 
 ## Acknowledgments
 
 - **Original CliffDelineaTool**: Zuzanna M. Swirad (zswirad@ucsd.edu), Scripps Institution of Oceanography, UC San Diego
 - **Training/validation datasets**: From Swirad & Young (2022), DOI: [10.5281/zenodo.5724975](https://doi.org/10.5281/zenodo.5724975)
-- **v2.0 deep learning implementation**: Built using the calibration data from the original work
+- **v2.0 deep learning implementation**: Connor J Mack, Scripps Institution of Oceanography, UC San Diego, trained on the calibration data from the original work
 
 ## License
 
